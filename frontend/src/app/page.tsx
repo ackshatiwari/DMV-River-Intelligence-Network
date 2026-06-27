@@ -7,7 +7,7 @@ import About from "../components/about/about";
 import Locations from "../components/locations/locations";
 import Contact from "../components/contact/contact";
 import GetInvoled from "../components/get_involved/get_involved";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Page() {
   const [homePageActive, setHomePageActive] = useState(true);
@@ -18,6 +18,18 @@ export default function Page() {
 
   const unselectedClassPages = "text-xl font-bold text-gray-500 hover:text-gray-700 cursor-pointer";
   const selectedClassPages = "text-xl font-bold text-blue-500 cursor-pointer";
+
+  const [message, setMessage] = useState("");
+  
+  
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/data`)
+      .then((res) => res.json())
+      .then((data) => setMessage(data.message))
+      .catch((err) => console.error(err));
+  }, []);
+
+  console.log("Message from API:", message);
 
   return (
     <>

@@ -44,3 +44,9 @@ next-env.d.ts
 backend/app/__pycache__/
 backend/app/*.pyc
 backend/venv/
+backend/venv_linux/
+
+# claude files
+claude/
+
+

@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s 'https://waterservices.usgs.gov/nwis/iv/?format=json&sites=01646500&parameterCd=00060,00065,00010,00095,00300,00400,63680&startDT=2023-01-01&endDT=2023-01-31' -o C:/Users/drpri/AppData/Local/Temp/claude/c--Users-drpri-VS-projects-River-Network-Nonprofit/61f2b3d6-e704-40d8-ba95-b4b57b6a9856/scratchpad/usgs_resp.json)",
+      "Bash(python3 -c ' *)"
+    ]
+  }
+}

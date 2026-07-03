@@ -1,5 +1,5 @@
 """
-USGS data import template — uses the official `dataretrieval` package.
+USGS data import — uses the official `dataretrieval` package.
 
 `dataretrieval` is maintained by USGS alongside their API, so endpoint and
 auth changes are absorbed upstream rather than requiring edits here.
@@ -24,7 +24,7 @@ from datetime import datetime, timedelta
 
 
 # ── 1. Site ───────────────────────────────────────────────────────────────────
-SITE_ID = "USGS-01646500"  # must include the USGS- prefix
+SITE_ID = "USGS-01646500"  # Potomac River Near Wash, DC Little Falls Pump Sta - USGS-01646500
 
 # ── 2. Parameters ─────────────────────────────────────────────────────────────
 # continuous = 15-min instantaneous — hydraulic
@@ -128,6 +128,30 @@ def _pivot(df, param_map):
     return pivot
 
 
+def fill_csv_dataset(hydraulic_df, water_quality_df, weather_df):
+    """
+    Merge the three datasets into a single DataFrame and save to CSV.
+    """
+    df = pd.concat([hydraulic_df, water_quality_df, weather_df], axis=1)
+
+    sparse_cols = [
+        "dissolved_oxygen_mg_l", "pH", "specific_conductance_us_cm",
+        "temperature_c", "turbidity_fnu",
+        "soil_moisture_0_to_1cm", "soil_moisture_1_to_3cm",
+        "precipitation", "rain", "snowfall", "snow_depth",
+        "temperature_2m", "wind_speed_10m", "vapour_pressure_deficit"
+    ]
+    df[sparse_cols] = df[sparse_cols].ffill()
+
+    # Derived precipitation features
+    # rolling(3) = 3 hours, rolling(24) = 24 hours
+    df["precip_3hr"]  = df["precipitation"].rolling(36).sum()
+    df["precip_24hr"] = df["precipitation"].rolling(288).sum()
+    df["precip_72hr"] = df["precipitation"].rolling(864).sum()
+
+    df.to_csv(f"backend/SOURCES_AND_DATASHEETS/usgs_data_{SITE_ID}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv")
+    print(f"\nData saved to CSV: usgs_data_{SITE_ID}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv")
+
 # ── Fetch ─────────────────────────────────────────────────────────────────────
 
 # Fetch 15-min hydraulic data (streamflow, gage height) for the site and time range.
@@ -206,3 +230,9 @@ if __name__ == "__main__":
     else:
         print(f"  {len(weather)} rows, columns: {list(weather.columns)}")
         print(weather.head())
+    
+    # if there is data, group them into ONE large DataFrame and save to CSV for later use
+    if not hydraulic.empty or not wq.empty or not weather.empty:
+        fill_csv_dataset(hydraulic, wq, weather)
+    else:
+        print("\nNo data to save to CSV.")

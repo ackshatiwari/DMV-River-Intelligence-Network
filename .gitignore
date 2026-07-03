@@ -49,4 +49,6 @@ backend/venv_linux/
 # claude files
 claude/
 
-
+# miscellaneous
+*.sqlite
+*.csv

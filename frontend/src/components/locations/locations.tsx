@@ -38,34 +38,26 @@ export default function Locations() {
                 <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/40 to-transparent" />
                 <div className="relative mx-auto max-w-7xl px-6 py-14 sm:px-10 lg:px-12 lg:py-20">
                     <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 sm:grid-cols-2 lg:max-w-5xl lg:grid-cols-3">
-                        {/* Example card */}
                         <div className="rounded-lg border border-white/10 bg-slate-950/55 p-6 backdrop-blur-md">
-                            <h2 className="text-xl font-bold text-white">Goose Creek Chapter</h2>
-                            <p className="mt-2 text-sm leading-6 text-slate-300">
-                                A student-led team focused on monitoring and analyzing the health of Goose Creek
-                                in Northern Virginia.
-                            </p>
-                        </div>
-                        <div className="rounded-lg border border-white/10 bg-slate-950/55 p-6 backdrop-blur-md">
-                            <h2 className="text-xl font-bold text-white">Potomac River Chapter</h2>
-                            <p className="mt-2 text-sm leading-6 text-slate-300">
-                                Dedicated to studying the Potomac River, this chapter collects data on water quality
-                                and aquatic life to inform local conservation efforts.
-                            </p>
-                        </div>
-                        <div className="rounded-lg border border-white/10 bg-slate-950/55 p-6 backdrop-blur-md">
-                            <h2 className="text-xl font-bold text-white">Anacostia River Chapter</h2>
-                            <p className="mt-2 text-sm leading-6 text-slate-300">
-                                Focused on the Anacostia River, this chapter engages in community science projects to
-                                track pollution levels and promote river stewardship.
-                            </p>
+                            <Image src="/pot_river_near_little_falls.png" alt="Potomac River" width={300} height={300} className="rounded-md" />
+                            <h2 className="text-xl font-bold text-white">Potomac River <span className="text-cyan-300">(near Little Falls)</span></h2>
+                                <div>
+                                    <Image src="/marker.png" alt="marker" width={20} height={20} className="inline-block mr-2" />
+                                    38.9497° N, -77.1278° W
+                                </div>
+                                <div>
+                                    <button className="mt-2 inline-flex items-center justify-center rounded-full bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300">
+                                        Contact Chapter
+                                    </button>
+                                </div>
+                            
                         </div>
                     </div>
                 </div>
             </section>
 
 
-            
+
 
             <Footer />
         </main>

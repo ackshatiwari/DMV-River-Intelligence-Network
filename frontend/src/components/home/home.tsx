@@ -8,6 +8,7 @@ const impactMetrics = [
     { value: "24/7", label: "Open access to river data" },
 ];
 
+// Pillars of the DMV River Intelligence Network Home Page
 const pillars = [
     {
         title: "Open, Accurate Data",
@@ -32,7 +33,7 @@ export default function Home() {
 
                 <div className="relative mx-auto grid max-w-7xl gap-14 px-6 py-16 sm:px-10 lg:grid-cols-[1.05fr_0.95fr] lg:px-12 lg:py-24">
                     <div className="flex flex-col justify-center">
-                        
+
 
                         <h1 className="mt-8 max-w-3xl text-5xl font-black leading-[0.95] tracking-tight text-white sm:text-6xl lg:text-7xl">
                             Know your river.

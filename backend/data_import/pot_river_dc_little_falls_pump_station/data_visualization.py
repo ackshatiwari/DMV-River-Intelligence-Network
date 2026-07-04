@@ -8,16 +8,19 @@ df = pd.read_csv("backend/SOURCES_AND_DATASHEETS/usgs_data_USGS-01646500_2026070
 df.rename(columns={df.columns[0]: "datetime"}, inplace=True)
 df["datetime"] = pd.to_datetime(df["datetime"], utc=True)
 
-df = df.dropna(subset=["streamflow_cfs"])
 
-# plot streamflow on y axis and date on x axis
+df = df.dropna(subset=["precipitation", "streamflow_cfs"])
+
+# plot precipitation on y axis and date on x axis
 plt.figure(figsize=(12, 6))
-sns.lineplot(data=df, x="datetime", y="streamflow_cfs")
-plt.title("Streamflow Over Time")
-plt.xlabel("Date")
-plt.ylabel("Streamflow (cfs)")
-plt.xticks(rotation=45)
-plt.tight_layout()
 
-plt.savefig("streamflow_plot.png")
+# Make two, side-by-side plots, one for precipitation and one for streamflow
+plt.subplot(1, 2, 1)
+sns.lineplot(data=df, x="datetime", y="precipitation", color="blue")
+plt.title("Precipitation Over Time")
+
+plt.subplot(1, 2, 2)
+sns.lineplot(data=df, x="datetime", y="streamflow_cfs", color="orange")
+plt.title("Streamflow Over Time")
+
 plt.show()

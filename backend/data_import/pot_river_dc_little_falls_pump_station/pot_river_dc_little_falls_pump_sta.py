@@ -45,8 +45,8 @@ DAILY_PARAMS = {
 # ── 3. Time range ─────────────────────────────────────────────────────────────
 # ISO 8601 duration (e.g. "P30D" = last 30 days) OR "YYYY-MM-DD/YYYY-MM-DD".
 # Period takes priority when set; set to None to use START/END dates.
-PERIOD = "P30D"
-START_DATE = "2026-06-01"
+PERIOD = "P365D"  # last 365 days
+START_DATE = "2025-06-01"
 END_DATE = "2026-06-30"
 
 # lat / lng

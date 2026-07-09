@@ -18,6 +18,7 @@ import openmeteo_requests
 import requests_cache
 from retry_requests import retry
 from datetime import datetime, timedelta
+from pathlib import Path
 
 
 
@@ -149,8 +150,12 @@ def fill_csv_dataset(hydraulic_df, water_quality_df, weather_df):
     df["precip_24hr"] = df["precipitation"].rolling(288).sum()
     df["precip_72hr"] = df["precipitation"].rolling(864).sum()
 
-    df.to_csv(f"backend/SOURCES_AND_DATASHEETS/usgs_data_{SITE_ID}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv")
-    print(f"\nData saved to CSV: usgs_data_{SITE_ID}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv")
+    output_dir = Path(__file__).resolve().parents[2] / "SOURCES_AND_DATASHEETS"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    output_file = output_dir / f"usgs_data_{SITE_ID}.csv"
+    df.to_csv(output_file)
+    print(f"\nData saved to CSV: {output_file}")
 
 # ── Fetch ─────────────────────────────────────────────────────────────────────
 

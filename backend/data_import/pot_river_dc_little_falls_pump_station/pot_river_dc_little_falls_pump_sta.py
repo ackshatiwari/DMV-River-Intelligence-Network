@@ -46,8 +46,8 @@ DAILY_PARAMS = {
 # ── 3. Time range ─────────────────────────────────────────────────────────────
 # ISO 8601 duration (e.g. "P30D" = last 30 days) OR "YYYY-MM-DD/YYYY-MM-DD".
 # Period takes priority when set; set to None to use START/END dates.
-PERIOD = "P1100D"  # last 1100 days
-START_DATE = "2023-07-06"
+PERIOD = None  # last 1100 days
+START_DATE = "2010-07-06"
 END_DATE = "2026-07-06"
 
 # lat / lng
@@ -159,24 +159,54 @@ def fill_csv_dataset(hydraulic_df, water_quality_df, weather_df):
 
 # ── Fetch ─────────────────────────────────────────────────────────────────────
 
-# Fetch 15-min hydraulic data (streamflow, gage height) for the site and time range.
+def _date_chunks(start_date, end_date, max_days=1000):
+    """Split a date range into chunks no longer than max_days (margin under the 1100-day API cap)."""
+    start = datetime.strptime(start_date, "%Y-%m-%d")
+    end = datetime.strptime(end_date, "%Y-%m-%d")
+    chunks = []
+    current = start
+
+    while current < end:
+        chunk_end = min(current + timedelta(days=max_days), end)
+        chunks.append((current.strftime("%Y-%m-%d"), chunk_end.strftime("%Y-%m-%d")))
+        current = chunk_end + timedelta(days=1)
+    return chunks
+
+
 def fetch_hydraulic():
-    df, _ = waterdata.get_continuous(
-        monitoring_location_id=SITE_ID,
-        parameter_code=list(CONTINUOUS_PARAMS.keys()),
-        time=_time(),
-    )
-    return _pivot(df, CONTINUOUS_PARAMS)
+    start, end = _weather_dates()
+    dfs = []
 
-# Fetch daily water quality data (temperature, conductivity, DO, pH, turbidity) for the site and time range.
+    for chunk_start, chunk_end in _date_chunks(start, end):
+        print(f"  fetching hydraulic {chunk_start} to {chunk_end}...")
+        df, _ = waterdata.get_continuous(
+            monitoring_location_id=SITE_ID,
+            parameter_code=list(CONTINUOUS_PARAMS.keys()),
+            time=f"{chunk_start}/{chunk_end}",
+        )
+        if not df.empty:
+            dfs.append(df)
+    if not dfs:
+        return pd.DataFrame()
+    return _pivot(pd.concat(dfs, ignore_index=True), CONTINUOUS_PARAMS)
+
+
 def fetch_water_quality():
-    df, _ = waterdata.get_daily(
-        monitoring_location_id=SITE_ID,
-        parameter_code=list(DAILY_PARAMS.keys()),
-        time=_time(),
-    )
-    return _pivot(df, DAILY_PARAMS)
-
+    start, end = _weather_dates()
+    dfs = []
+    
+    for chunk_start, chunk_end in _date_chunks(start, end):
+        print(f"  fetching water quality {chunk_start} to {chunk_end}...")
+        df, _ = waterdata.get_daily(
+            monitoring_location_id=SITE_ID,
+            parameter_code=list(DAILY_PARAMS.keys()),
+            time=f"{chunk_start}/{chunk_end}",
+        )
+        if not df.empty:
+            dfs.append(df)
+    if not dfs:
+        return pd.DataFrame()
+    return _pivot(pd.concat(dfs, ignore_index=True), DAILY_PARAMS)
 
 def fetch_weather():
     start, end = _weather_dates()
@@ -208,6 +238,9 @@ def fetch_weather():
 
     return df
 
+
+
+        
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":

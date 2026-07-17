@@ -12,6 +12,7 @@ export default function About() {
                     </div>
 
                     <div className="mt-12 grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-3">
+
                         <div className="flex flex-col items-center rounded-lg border border-slate-700/50 bg-slate-900/40 p-8 backdrop-blur-sm transition hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-500/10">
                             <img
                                 src="/Ackshat_Founder.png"
@@ -19,9 +20,11 @@ export default function About() {
                                 className="h-48 w-48 rounded-lg object-cover"
                             />
                             <h2 className="mt-6 text-2xl font-bold text-white">Ackshat Tiwari</h2>
-                            <p className="mt-4 text-center text-slate-300 leading-relaxed">
-                                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                                Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                            <p className="mt-2 text-center text-slate-300">
+                               <strong>Founder & CEO</strong><br />
+                               I am a high school sophomore in the Academies of Loudoun, and I am passionate about applying
+                               technology and ML to solve real-world problems. I handle the Network's day-to-day operations, 
+                               and am the lead ML Engineer of our first chapter, the Potomac River near Little Falls. 
                             </p>
                         </div>
                     </div>

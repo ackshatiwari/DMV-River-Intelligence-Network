@@ -63,10 +63,9 @@ export default function Contact() {
             <section className="mx-auto max-w-3xl px-6 py-12">
                 <div className="rounded-3xl bg-white/90 p-8 shadow-lg ring-1 ring-black/5">
                     <div className="mb-8 space-y-3">
-                        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-sky-700">Contact</p>
-                        <h1 className="text-3xl font-bold text-slate-900">Send the team a message</h1>
+                        <h1 className="text-3xl font-bold text-slate-900">Contact Us</h1>
                         <p className="text-base text-slate-600">
-                            Use the form below to send a message through Resend. Make sure your Resend API key and recipient email are set in <span className="font-medium">.env.local</span>.
+                            Use the form below to send us a message. We will try to respond to your query within <span className="font-medium">3 business days</span>.
                         </p>
                     </div>
 
@@ -91,10 +90,10 @@ export default function Contact() {
                                     required
                                 />
                             </label>
-                        </div>
+                        </div>  
 
                         <label className="grid gap-2 text-sm font-medium text-slate-700">
-                            Email
+                            Email Address
                             <input
                                 type="email"
                                 className="rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-200"

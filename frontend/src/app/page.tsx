@@ -2,14 +2,16 @@
 
 import Image from "next/image";
 import Logo from "../components/logo/logo";
+import { useRouter } from "next/navigation";
+
 import Home from "../components/home/home";
 import About from "../components/about/about";
-import Locations from "../components/locations/locations";
 import Contact from "../components/contact/contact";
 import GetInvoled from "../components/get_involved/get_involved";
 import { useEffect, useState } from "react"; 
 
 export default function Page() {
+  const router = useRouter();
   const [homePageActive, setHomePageActive] = useState(true);
   const [aboutPageActive, setAboutPageActive] = useState(false);
   const [locationsPageActive, setLocationsPageActive] = useState(false);
@@ -28,6 +30,12 @@ export default function Page() {
       .then((data) => setMessage(data.message))
       .catch((err) => console.error(err));
   }, []);
+
+  useEffect(() => {
+    if (locationsPageActive) {
+      router.push("/chapters");
+    }
+  }, [locationsPageActive, router]);
 
   console.log("Message from API:", message);
 
@@ -78,7 +86,6 @@ export default function Page() {
     {/* Render the components based on the useState values */}
     {homePageActive && <Home /> }
     {aboutPageActive && <About />}
-    {locationsPageActive && <Locations />}
     {contactPageActive && <Contact />}
     {getInvolvedPageActive && <GetInvoled />}
 

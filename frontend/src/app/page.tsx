@@ -7,7 +7,7 @@ import About from "../components/about/about";
 import Locations from "../components/locations/locations";
 import Contact from "../components/contact/contact";
 import GetInvoled from "../components/get_involved/get_involved";
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react"; 
 
 export default function Page() {
   const [homePageActive, setHomePageActive] = useState(true);

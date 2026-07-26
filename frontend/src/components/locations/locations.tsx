@@ -1,9 +1,29 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import Logo from "@/src/components/logo/logo";
 import Footer from "../footer/footer";
+import { useEffect } from "react";
 
 export default function Locations() {
+
+    // if clicked, trigger a useEffect to redirect to the dashboard page for the Potomac River near Little Falls
+    useEffect(() => {
+        const pot_river_near_little_falls_btn = document.getElementById('potomac-river-near-little-falls-dashboard');
+
+        if (pot_river_near_little_falls_btn) {
+            pot_river_near_little_falls_btn.addEventListener('click', () => {
+                window.location.href = '/dashboard/potomac-river-near-little-falls';
+            });
+        }
+    }, []);
+
+
+
+
+
+
     return (
         <main className="min-h-screen bg-slate-950 text-slate-100">
             <section className="relative overflow-hidden">
@@ -41,16 +61,16 @@ export default function Locations() {
                         <div className="rounded-lg border border-white/10 bg-slate-950/55 p-6 backdrop-blur-md">
                             <Image src="/pot_river_near_little_falls.png" alt="Potomac River" width={300} height={300} className="rounded-md" />
                             <h2 className="text-xl font-bold text-white">Potomac River <span className="text-cyan-300">(near Little Falls)</span></h2>
-                                <div>
-                                    <Image src="/marker.png" alt="marker" width={20} height={20} className="inline-block mr-2" />
-                                    38.9497° N, -77.1278° W
-                                </div>
-                                <div>
-                                    <button className="mt-2 inline-flex items-center justify-center rounded-full bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300">
-                                        Contact Chapter
-                                    </button>
-                                </div>
-                            
+                            <div>
+                                <Image src="/marker.png" alt="marker" width={20} height={20} className="inline-block mr-2" />
+                                38.9497° N, -77.1278° W
+                            </div>
+                            <div>
+                                <button id="potomac-river-near-little-falls-dashboard" className="mt-2 inline-flex items-center justify-center rounded-full bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300">
+                                    View Dashboard
+                                </button>
+                            </div>
+
                         </div>
                     </div>
                 </div>

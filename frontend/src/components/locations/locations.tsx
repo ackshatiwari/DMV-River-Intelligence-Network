@@ -2,22 +2,32 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Logo from "@/src/components/logo/logo";
 import Footer from "../footer/footer";
 import { useEffect } from "react";
+import LittleFallsPumpStation from "@/src/app/chapters/pot_river_dc_little_falls_pump_station/page";
 
 export default function Locations() {
+    const router = useRouter();
 
-    // if clicked, trigger a useEffect to redirect to the dashboard page for the Potomac River near Little Falls
     useEffect(() => {
         const pot_river_near_little_falls_btn = document.getElementById('potomac-river-near-little-falls-dashboard');
 
-        if (pot_river_near_little_falls_btn) {
-            pot_river_near_little_falls_btn.addEventListener('click', () => {
-                window.location.href = '/dashboard/potomac-river-near-little-falls';
-            });
+        if (!pot_river_near_little_falls_btn) {
+            return;
         }
-    }, []);
+
+        const handleClick = () => {
+            router.push('/chapters/pot_river_dc_little_falls_pump_station');
+        };
+
+        pot_river_near_little_falls_btn.addEventListener('click', handleClick);
+
+        return () => {
+            pot_river_near_little_falls_btn.removeEventListener('click', handleClick);
+        };
+    }, [router]);
 
 
 

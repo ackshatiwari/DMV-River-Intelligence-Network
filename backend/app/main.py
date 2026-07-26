@@ -1,7 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from backend.app.routers.potomac_river import pot_river_dc_little_falls_pump_station
+
+
 app = FastAPI()
+
+app.include_router(pot_river_dc_little_falls_pump_station.router)
 
 origins = [
     "http://localhost:3000", 

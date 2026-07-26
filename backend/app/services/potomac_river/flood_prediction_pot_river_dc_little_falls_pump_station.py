@@ -1,0 +1,35 @@
+from dataretrieval import waterdata
+import requests
+
+PARAMETER_NAMES = {
+    "00060": "discharge_cfs",
+    "00065": "gage_height_ft",
+    "00010": "water_temperature_c",
+    "00095": "specific_conductance_us_cm",
+}
+
+def get_current_data():
+    SITE_ID = "USGS-01646500"
+
+    df_continuous, metadata = waterdata.get_continuous(
+        monitoring_location_id=SITE_ID,
+        parameter_code=list(PARAMETER_NAMES.keys()),
+        time="P1D",
+    )
+
+    df = df_continuous[["time", "parameter_code", "value"]].copy()
+
+    # Rename parameter codes to readable names
+    df["parameter_code"] = df["parameter_code"].replace(PARAMETER_NAMES)
+
+    # Pivot so each parameter becomes a column
+    df = (
+        df.pivot(
+            index="time",
+            columns="parameter_code",
+            values="value",
+        )
+        .reset_index()
+    )
+
+    return df

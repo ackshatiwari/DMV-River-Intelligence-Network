@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.app.routers.potomac_river import pot_river_dc_little_falls_pump_station
+from .routers.potomac_river import pot_river_dc_little_falls_pump_station
 
 
 app = FastAPI()

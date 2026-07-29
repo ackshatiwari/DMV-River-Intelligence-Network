@@ -1,7 +1,7 @@
 
 from fastapi import APIRouter
 # import the service module for the Little Falls Pump Station
-from backend.app.services.potomac_river.flood_prediction_pot_river_dc_little_falls_pump_station import get_current_data
+from ...services.potomac_river.flood_prediction_pot_river_dc_little_falls_pump_station import get_current_data
 
 
 router = APIRouter(prefix="/potomac/little_falls_pump_station", tags=["little_falls_pump_station"])

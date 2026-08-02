@@ -6,10 +6,10 @@ import RiverDataChart, { type RiverMetric } from "@/src/components/RiverDataChar
 type RiverApiData = Record<string, Record<string, string | number | null | undefined>>;
 
 const riverMetrics: RiverMetric[] = [
-    { key: "discharge_cfs", label: "Discharge", unit: "cfs" },
-    { key: "gage_height_ft", label: "Gage Height", unit: "ft" },
-    { key: "specific_conductance_us_cm", label: "Conductivity", unit: "μS/cm" },
-    { key: "water_temperature_c", label: "Temperature", unit: "°C" },
+    { key: "discharge_cfs", label: "Discharge", description: "Volume of water flowing past this point", unit: "cfs" },
+    { key: "gage_height_ft", label: "Gage Height", description: "Water surface elevation above the gage datum", unit: "ft" },
+    { key: "specific_conductance_us_cm", label: "Conductivity", description: "Dissolved ion concentration in the water", unit: "μS/cm" },
+    { key: "water_temperature_c", label: "Temperature", description: "Temperature of the river water itself", unit: "°C" },
 ];
 
 export default function LittleFallsPumpStation() {
@@ -68,9 +68,7 @@ export default function LittleFallsPumpStation() {
                 ) : null}
 
                 {riverData ? (
-                    <div className="max-w-2xl">
-                        <RiverDataChart data={riverData} metrics={riverMetrics} title="Potomac River at Little Falls Pump Station" />
-                    </div>
+                    <RiverDataChart data={riverData} metrics={riverMetrics} title="Potomac River at Little Falls Pump Station" />
                 ) : null}
             </div>
 

@@ -20,8 +20,7 @@ export default function LittleFallsPumpStation() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const [floodRisk, setFloodRisk] = useState<FloodRiskResponse | null>(null);
-    const [floodRiskLoading, setFloodRiskLoading] = useState(true);
+    const [floodRisk, setFloodRisk] = useState<FloodRiskResponse | null>(null);const [floodRiskLoading, setFloodRiskLoading] = useState(true);
     const [floodRiskError, setFloodRiskError] = useState<string | null>(null);
 
     useEffect(() => {

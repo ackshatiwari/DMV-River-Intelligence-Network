@@ -1,11 +1,13 @@
 from datetime import datetime, timezone
-from typing import Literal, Optional
+from typing import Dict, Literal, Optional, Union
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 # import the service module for the Little Falls Pump Station
-from ...services.potomac_river.flood_prediction_pot_river_dc_little_falls_pump_station import get_current_data
+from ...services.potomac_river.flood_prediction_pot_river_dc_little_falls_pump_station import (
+    get_current_conditions as fetch_current_conditions,
+)
 
 from ...services.potomac_river.flood_features_pot_river_dc_little_falls_pump_station import (
     InsufficientDataError,
@@ -22,6 +24,34 @@ ALERT_THRESHOLD = 0.318 # see cell 10 of the xgboost nb
 # 2 hours is a reasonable placeholder given USGS's typical reporting lag, not a
 # value pulled from any requirement.
 STALE_AFTER_MINUTES = 120
+
+class ParameterReading(BaseModel):
+    """The latest value for a single USGS parameter, and when it was observed."""
+    value: Optional[float] = None
+    observed_at: Optional[datetime] = None
+
+
+class CurrentConditionsResponse(BaseModel):
+    """
+    Typed contract for /current_conditions. This is the structural guard against
+    the bug this replaced: a raw DataFrame used to be handed to FastAPI, which
+    encoded its NaN cells as bare `NaN` -- not valid JSON, so the response blew
+    up at serialization time. A declared response_model can't ship a numpy float.
+    """
+    site_id: str
+    retrieved_at: datetime
+
+    # Headline number per parameter -- each with its own timestamp, because the
+    # four parameters report on different cadences.
+    snapshot: Dict[str, ParameterReading]
+
+    # 24h series for the charts, in pandas' {column: {row_index: value}} shape --
+    # which is exactly what RiverDataChart.tsx already reads, so the key stays
+    # "data" and the frontend is unchanged. `time` values are ISO strings, every
+    # other column is float-or-null (null where that parameter didn't report at
+    # that timestamp).
+    data: Dict[str, Dict[str, Optional[Union[str, float]]]]
+
 
 class DataFreshness(BaseModel):
     """How old each live data source was when this prediction was made."""
@@ -52,10 +82,25 @@ def health_check():
     return {"status": "Little Falls Pump Station API is healthy!"}
 
 
-@router.get("/current_conditions")
+@router.get("/current_conditions", response_model=CurrentConditionsResponse)
 def get_current_conditions():
-    current_conditions = get_current_data()
-    return {"message": "Current conditions data will be here.", "data": current_conditions}
+    try:
+        conditions = fetch_current_conditions()
+    except Exception as exc:
+        # USGS unreachable or malformed -- an upstream problem, same as /flood_risk
+        # treats it. 503 tells the frontend "retry later" instead of surfacing a
+        # raw 500 traceback.
+        raise HTTPException(
+            status_code=503,
+            detail=f"Upstream data source unavailable: {exc}",
+        )
+
+    return CurrentConditionsResponse(
+        site_id=conditions["site_id"],
+        retrieved_at=datetime.now(timezone.utc),
+        snapshot=conditions["snapshot"],
+        data=conditions["data"],
+    )
 
 
 @router.get("/flood_risk", response_model=FloodRiskResponse)

@@ -116,46 +116,63 @@ function PerYearStrip({ perYear, currentYear }: PerYearStripProps) {
     const maxMean = Math.max(...years.map((year) => perYear[year].mean));
 
     return (
-        <div className="mt-5">
+        <div className="mt-5 flex flex-1 flex-col">
             <p className="text-xs text-slate-400">15-day window around this date, each year</p>
 
-            {/* ONE series (discharge by year), so one hue -- colouring each bar by
+            {/* HORIZONTAL rows -- year label, bar, value -- so the strip fills a
+                tall narrow column and every year label reads left-to-right
+                without rotation.
+
+                ONE series (discharge by year), so one hue: colouring each bar by
                 its own band would imply the years are separate categories and put
                 five hues on screen at once. The current year is distinguished by
-                weight and a label, not by a different colour.
+                weight and opacity, not by a different colour.
 
-                Each bar lives in its own fixed-height TRACK rather than sharing a
-                flex column with the labels. Without the track the bar is a flex
-                item competing with the text for space: flex-shrink squashes the
-                tall bars and the percentage resolves against whatever is left
-                over, so the bars come out nearly equal regardless of their
-                values -- the encoding silently stops encoding anything. */}
-            <div className="mt-2 flex items-end gap-2">
+                Each bar sits in its own TRACK with an explicit width. Without the
+                track the bar is a flex item competing with the labels for space,
+                and flex-shrink squashes the long ones -- the bars come out nearly
+                equal regardless of their values and the encoding silently stops
+                encoding anything. That was a real bug in the vertical version. */}
+            {/* justify-between + flex-1: the rows spread to fill the tall right
+                column instead of bunching at the top with dead space beneath. */}
+            <div className="mt-3 flex flex-1 flex-col justify-between gap-3">
                 {years.map((year) => {
                     const stat = perYear[year];
                     const isCurrent = year === currentYear;
-                    // Floor the height so a very dry year is still a visible mark
+                    // Floor the width so a very dry year is still a visible mark
                     // rather than an invisible sliver.
-                    const heightPercent = maxMean > 0 ? Math.max((stat.mean / maxMean) * 100, 4) : 4;
+                    const widthPercent = maxMean > 0 ? Math.max((stat.mean / maxMean) * 100, 2) : 2;
 
                     return (
-                        <div key={year} className="flex flex-1 flex-col items-center gap-1">
-                            <span className="text-[10px] tabular-nums text-slate-400">{formatFlow(stat.mean)}</span>
+                        <div key={year} className="flex items-center gap-3">
+                            <span
+                                className={`w-9 shrink-0 text-[11px] tabular-nums ${
+                                    isCurrent ? "font-semibold text-slate-100" : "text-slate-400"
+                                }`}
+                            >
+                                {year}
+                            </span>
 
-                            <div className="flex w-full items-end border-b border-slate-700/70" style={{ height: 96 }}>
+                            <div
+                                className="h-3 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-800/70"
+                                title={`${year}: ${formatFlow(stat.mean)} cfs mean, ${stat.n} daily readings`}
+                            >
                                 <div
-                                    className="w-full shrink-0 rounded-t"
+                                    className="h-full rounded-full"
                                     style={{
-                                        height: `${heightPercent}%`,
+                                        width: `${widthPercent}%`,
                                         backgroundColor: "#3987e5",
                                         opacity: isCurrent ? 1 : 0.45,
                                     }}
-                                    title={`${year}: ${formatFlow(stat.mean)} cfs mean, ${stat.n} daily readings`}
                                 />
                             </div>
 
-                            <span className={`text-[11px] tabular-nums ${isCurrent ? "font-semibold text-slate-100" : "text-slate-400"}`}>
-                                {year}
+                            <span
+                                className={`w-12 shrink-0 text-right text-[11px] tabular-nums ${
+                                    isCurrent ? "text-slate-200" : "text-slate-400"
+                                }`}
+                            >
+                                {formatFlow(stat.mean)}
                             </span>
                         </div>
                     );
@@ -182,7 +199,9 @@ export default function HistoricalContextCard({ context, loading, error }: Histo
         context && median !== null && median !== 0 ? ((context.current - median) / median) * 100 : null;
 
     return (
-        <section className="rounded-2xl border border-slate-700/70 bg-slate-950/70 p-4 shadow-2xl shadow-slate-950/40 backdrop-blur md:p-6">
+        // flex column + h-full so the card fills the grid row's height and the
+        // per-year strip below can spread into it.
+        <section className="flex h-full flex-col rounded-2xl border border-slate-700/70 bg-slate-950/70 p-4 shadow-2xl shadow-slate-950/40 backdrop-blur md:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <h2 className="text-xl font-semibold text-slate-50 md:text-2xl">Compared to this time of year</h2>
 

@@ -9,11 +9,22 @@ type RiverApiData = Record<string, Record<string, string | number | null | undef
 
 const FLOOD_RISK_POLL_INTERVAL_MS = 10 * 60 * 1000; // 10 min, matched to the gauge's ~15-min update cadence
 
+// Muted grey stroke demotes the two secondary metrics against the coloured
+// primaries. Data logic is untouched -- this is the stroke colour only.
+const SECONDARY_STROKE = "#94a3b8";
+
+const PRIMARY_CHART_HEIGHT = 190;
+const SECONDARY_CHART_HEIGHT = 95;
+
+// ONE array -> one card, one toggler, one observation count. Order matters: the
+// grid is two columns, so the first two land in a tall top row and the last two
+// in a shorter row beneath. Colours are explicit rather than positional so they
+// can't drift if this array is ever reordered.
 const riverMetrics: RiverMetric[] = [
-    { key: "discharge_cfs", label: "Discharge", description: "Volume of water flowing past this point", unit: "cfs" },
-    { key: "gage_height_ft", label: "Gage Height", description: "Water surface elevation above the gage datum", unit: "ft" },
-    { key: "specific_conductance_us_cm", label: "Conductivity", description: "Dissolved ion concentration in the water", unit: "μS/cm" },
-    { key: "water_temperature_c", label: "Temperature", description: "Temperature of the river water itself", unit: "°C" },
+    { key: "discharge_cfs", label: "Discharge", description: "Volume of water flowing past this point", unit: "cfs", color: "#0ea5e9", chartHeight: PRIMARY_CHART_HEIGHT },
+    { key: "gage_height_ft", label: "Gage Height", description: "Water surface elevation above the gage datum", unit: "ft", color: "#10b981", chartHeight: PRIMARY_CHART_HEIGHT },
+    { key: "specific_conductance_us_cm", label: "Conductivity", description: "Dissolved ion concentration in the water", unit: "μS/cm", color: SECONDARY_STROKE, chartHeight: SECONDARY_CHART_HEIGHT },
+    { key: "water_temperature_c", label: "Temperature", description: "Temperature of the river water itself", unit: "°C", color: SECONDARY_STROKE, chartHeight: SECONDARY_CHART_HEIGHT },
 ];
 
 export default function LittleFallsPumpStation() {
@@ -138,29 +149,43 @@ export default function LittleFallsPumpStation() {
                     <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">DMV River Intelligence Network - Little Falls Pump Station</h1>
                 </header>
 
-                <FloodRiskCard floodRisk={floodRisk} loading={floodRiskLoading} error={floodRiskError} />
+                {/* Two columns above ~900px, one below. The right column is a fixed
+                    320px so the year-over-year strip keeps a predictable width;
+                    minmax(0,1fr) on the left stops the charts' intrinsic width from
+                    blowing the grid out wider than its container. */}
+                <div className="grid grid-cols-1 gap-6 min-[900px]:grid-cols-[minmax(0,1fr)_320px]">
+                    <div className="flex min-w-0 flex-col gap-6">
+                        {error ? (
+                            <div className="rounded-2xl border border-rose-500/30 bg-rose-950/60 px-4 py-3 text-sm text-rose-100">
+                                {error}
+                            </div>
+                        ) : null}
 
-                <HistoricalContextCard
-                    context={historicalContext}
-                    loading={historicalLoading}
-                    error={historicalError}
-                />
+                        {loading ? (
+                            <div className="rounded-2xl border border-slate-700/70 bg-slate-950/70 px-4 py-6 text-sm text-slate-300 shadow-2xl shadow-slate-950/40 backdrop-blur">
+                                Loading river data...
+                            </div>
+                        ) : null}
 
-                {error ? (
-                    <div className="rounded-2xl border border-rose-500/30 bg-rose-950/60 px-4 py-3 text-sm text-rose-100">
-                        {error}
+                        {riverData ? (
+                            <RiverDataChart
+                                data={riverData}
+                                metrics={riverMetrics}
+                                title="Potomac River at Little Falls Pump Station"
+                            />
+                        ) : null}
+
+                        <FloodRiskCard floodRisk={floodRisk} loading={floodRiskLoading} error={floodRiskError} />
                     </div>
-                ) : null}
 
-                {loading ? (
-                    <div className="rounded-2xl border border-slate-700/70 bg-slate-950/70 px-4 py-6 text-sm text-slate-300 shadow-2xl shadow-slate-950/40 backdrop-blur">
-                        Loading river data...
+                    <div className="h-full min-w-0">
+                        <HistoricalContextCard
+                            context={historicalContext}
+                            loading={historicalLoading}
+                            error={historicalError}
+                        />
                     </div>
-                ) : null}
-
-                {riverData ? (
-                    <RiverDataChart data={riverData} metrics={riverMetrics} title="Potomac River at Little Falls Pump Station" />
-                ) : null}
+                </div>
             </div>
 
         </main>

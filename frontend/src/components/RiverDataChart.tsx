@@ -18,6 +18,13 @@ export type RiverMetric = {
   description?: string;
   unit?: string;
   color?: string;
+  /**
+   * Per-metric plot height, overriding the chart-wide `chartHeight`. This is what
+   * lets ONE card hold a tall primary row and a shorter secondary row -- the grid
+   * sizes each row to its contents, so the two secondary metrics landing in row 2
+   * make that row shorter without needing a second card or a second toggler.
+   */
+  chartHeight?: number;
 };
 
 
@@ -32,6 +39,8 @@ type RiverDataChartProps = {
   data: RiverDataRecord | null | undefined;
   metrics: RiverMetric[];
   title?: string;
+  /** Default plot height in px, for metrics that don't set their own. */
+  chartHeight?: number;
 };
 
 const defaultPalette = ["#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#14b8a6"];
@@ -101,9 +110,10 @@ type MetricChartCardProps = {
   color: string;
   data: RiverChartRow[];
   latestValue: number | null;
+  chartHeight: number;
 };
 
-function MetricChartCard({ dataKey, label, description, unit, color, data, latestValue }: MetricChartCardProps) {
+function MetricChartCard({ dataKey, label, description, unit, color, data, latestValue, chartHeight }: MetricChartCardProps) {
   return (
     <div className="group rounded-2xl border border-slate-700/70 bg-slate-900/60 p-4 shadow-lg shadow-slate-950/30 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-slate-500/70 hover:shadow-xl hover:shadow-slate-900/50">
       <div className="mb-3 flex items-start justify-between gap-3">
@@ -117,7 +127,7 @@ function MetricChartCard({ dataKey, label, description, unit, color, data, lates
         </div>
       </div>
 
-      <div className="h-[220px] w-full">
+      <div className="w-full" style={{ height: chartHeight }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
             <CartesianGrid stroke="rgba(148, 163, 184, 0.15)" strokeDasharray="3 3" />
@@ -163,7 +173,7 @@ function MetricChartCard({ dataKey, label, description, unit, color, data, lates
   );
 }
 
-export default function RiverDataChart({ data, metrics, title = "River Monitoring" }: RiverDataChartProps) {
+export default function RiverDataChart({ data, metrics, title = "River Monitoring", chartHeight = 220 }: RiverDataChartProps) {
   const [visibleMetrics, setVisibleMetrics] = useState<string[]>(() => metrics.map((metric) => metric.key));
 
   const chartData = useMemo(() => toChartRows(data, metrics), [data, metrics]);
@@ -232,6 +242,7 @@ export default function RiverDataChart({ data, metrics, title = "River Monitorin
               color={metric.color}
               data={chartData}
               latestValue={getLatestValue(chartData, metric.key)}
+              chartHeight={metric.chartHeight ?? chartHeight}
             />
           ))}
         </div>

@@ -6,6 +6,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .routers.potomac_river import pot_river_dc_little_falls_pump_station
+from .services.potomac_river.historical_baseline_pot_river_dc_little_falls_pump_station import (
+    warm_baseline_cache,
+)
 
 
 # Path to the trained flood-threshold model, built from THIS file's own location
@@ -36,6 +39,17 @@ async def lifespan(app: FastAPI):
     
     app.state.flood_model = joblib.load(MODEL_PATH)
     print(f"Loaded flood model from {MODEL_PATH} -> {type(app.state.flood_model)}")
+
+    # Pay the six cold USGS fetches here rather than making the day's first
+    # visitor wait for them.
+    try:
+        warm_baseline_cache()
+    except Exception as exc:
+        # The broad catch is load-bearing, not politeness: an upstream outage
+        # while warming a DESCRIPTIVE STATISTIC must not take down /flood_risk and
+        # /current_conditions with it. The cache lazy-loads on first request
+        # instead, and /historical_context answers 503 until USGS recovers.
+        print(f"Baseline warm failed, will lazy-load on first request: {exc}")
 
     yield  # server runs and handles requests while paused here
 

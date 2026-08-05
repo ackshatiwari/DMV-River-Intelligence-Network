@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import RiverDataChart, { type RiverMetric } from "@/src/components/RiverDataChart";
 import FloodRiskCard, { type FloodRiskResponse } from "@/src/components/FloodRiskCard";
+import HistoricalContextCard, { type HistoricalContextResponse } from "@/src/components/HistoricalContextCard";
 
 type RiverApiData = Record<string, Record<string, string | number | null | undefined>>;
 
@@ -23,8 +24,18 @@ export default function LittleFallsPumpStation() {
     const [floodRisk, setFloodRisk] = useState<FloodRiskResponse | null>(null);const [floodRiskLoading, setFloodRiskLoading] = useState(true);
     const [floodRiskError, setFloodRiskError] = useState<string | null>(null);
 
+    const [historicalContext, setHistoricalContext] = useState<HistoricalContextResponse | null>(null);
+    const [historicalLoading, setHistoricalLoading] = useState(true);
+    const [historicalError, setHistoricalError] = useState<string | null>(null);
+
     useEffect(() => {
         fetchContinuousData();
+    }, []);
+
+    // Not polled, unlike flood risk: the baseline is served from a day-keyed cache
+    // and the 24h-mean current value barely moves within a session.
+    useEffect(() => {
+        fetchHistoricalContext();
     }, []);
 
     // Separate effect from the chart's fetch above -- this one polls, the chart's
@@ -64,6 +75,37 @@ export default function LittleFallsPumpStation() {
         }
     };
 
+    const fetchHistoricalContext = async () => {
+        setHistoricalLoading(true);
+        setHistoricalError(null);
+
+        try {
+            const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
+
+            if (!apiBaseUrl) {
+                throw new Error("NEXT_PUBLIC_API_URL is not configured.");
+            }
+
+            const response = await fetch(`${apiBaseUrl}/potomac/little_falls_pump_station/historical_context`);
+            if (!response.ok) {
+                // 503 means USGS is unreachable and the baseline couldn't be built --
+                // worth saying so rather than showing an empty card.
+                throw new Error(
+                    response.status === 503
+                        ? 'Historical baseline is temporarily unavailable.'
+                        : 'Network response was not ok',
+                );
+            }
+            const data: HistoricalContextResponse = await response.json();
+            setHistoricalContext(data);
+        } catch (error) {
+            setHistoricalError(error instanceof Error ? error.message : 'Error fetching historical context');
+            setHistoricalContext(null);
+        } finally {
+            setHistoricalLoading(false);
+        }
+    };
+
     const fetchFloodRisk = async () => {
         setFloodRiskLoading(true);
         setFloodRiskError(null);
@@ -97,6 +139,12 @@ export default function LittleFallsPumpStation() {
                 </header>
 
                 <FloodRiskCard floodRisk={floodRisk} loading={floodRiskLoading} error={floodRiskError} />
+
+                <HistoricalContextCard
+                    context={historicalContext}
+                    loading={historicalLoading}
+                    error={historicalError}
+                />
 
                 {error ? (
                     <div className="rounded-2xl border border-rose-500/30 bg-rose-950/60 px-4 py-3 text-sm text-rose-100">

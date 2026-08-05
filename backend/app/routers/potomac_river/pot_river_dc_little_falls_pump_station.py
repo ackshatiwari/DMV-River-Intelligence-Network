@@ -14,6 +14,11 @@ from ...services.potomac_river.flood_features_pot_river_dc_little_falls_pump_sta
     build_feature_row,
 )
 
+from ...services.potomac_river.historical_baseline_pot_river_dc_little_falls_pump_station import (
+    BaselineUnavailableError,
+    get_historical_context,
+)
+
 router = APIRouter(prefix="/potomac/little_falls_pump_station", tags=["little_falls_pump_station"])
 
 
@@ -75,6 +80,61 @@ class FloodRiskResponse(BaseModel):
     data_freshness: Optional[DataFreshness] = None
     stale: bool = False
     detail: Optional[str] = None  # human-readable reason, set when status != "ok"
+
+
+class BaselineComparison(BaseModel):
+    """
+    Where today's discharge sits against the seasonal baseline.
+
+    Everything below `status` is Optional because the two non-ok paths in the
+    service's compare() return ONLY status + sample_size -- there is deliberately
+    no number to report when the sample is too small or the baseline mean is
+    ~zero. Defaulting them to None rather than 0.0 is the point: a missing
+    comparison must never render as a confident zero (HISTORICAL_COMPARER_WIRING.md
+    section 9).
+    """
+    status: Literal["ok", "insufficient_data", "undefined"]
+    sample_size: int
+
+    # percentile is the headline; percent_change is secondary and must not lead the
+    # UI -- it's unbounded upward but floored at -100%, so the two directions aren't
+    # visually comparable (see section 2 of the design doc).
+    percentile: Optional[float] = None
+    percent_change: Optional[float] = None
+    baseline_mean: Optional[float] = None
+    # Returned but not displayed -- discharge is right-skewed, so a large
+    # mean/median divergence is worth being able to diagnose without a re-fetch.
+    baseline_median: Optional[float] = None
+
+
+class PerYearStat(BaseModel):
+    """One bar of the per-year context strip."""
+    mean: float
+    n: int
+
+
+class HistoricalContextResponse(BaseModel):
+    """
+    Contract for /historical_context. Numbers, not sentences -- the frontend
+    composes "lower than 89% of early Augusts on record" so copy edits don't
+    need a backend deploy.
+    """
+    site_id: str
+    parameter: str
+    generated_at: datetime
+    # When the cached seasonal windows were fetched, as distinct from when this
+    # response was generated -- the baseline is a day-keyed cache, so these
+    # legitimately differ by hours.
+    baseline_as_of: datetime
+
+    current: float
+    current_window: str
+    observed_at: datetime
+
+    comparison: BaselineComparison
+    # Keyed by year-as-string. Includes the CURRENT year, which is intentionally
+    # absent from the baseline it's compared against.
+    per_year: Dict[str, PerYearStat]
 
 
 @router.get("/health")
@@ -159,4 +219,32 @@ def get_flood_risk(request: Request):
         ),
         stale=stale,
     )
+
+
+@router.get("/historical_context", response_model=HistoricalContextResponse)
+def historical_context():
+    """
+    Today's discharge against a multi-year seasonal baseline -- "is this August
+    dry?", not "is this a flood". Independent of the model: no .pkl, no
+    FEATURE_COLUMNS.
+
+    Served from a day-keyed cache warmed at startup (see main.py's lifespan), so
+    the usual path here does no network I/O at all.
+    """
+    try:
+        context = get_historical_context()
+    except BaselineUnavailableError as exc:
+        # USGS unreachable or empty -- retry-able, and distinct from a
+        # too-few-samples outcome, which is NOT an exception: that comes back as a
+        # 200 with comparison.status set, so the per-year strip still renders.
+        #
+        # Deliberately narrow: no `except Exception` here. An unexpected bug
+        # should surface as a 500, not be laundered into "upstream unavailable"
+        # and quietly retried forever by the frontend.
+        raise HTTPException(
+            status_code=503,
+            detail=f"Historical baseline unavailable: {exc}",
+        )
+
+    return HistoricalContextResponse(**context)
 

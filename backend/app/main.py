@@ -59,17 +59,31 @@ app = FastAPI(lifespan=lifespan)
 
 app.include_router(pot_river_dc_little_falls_pump_station.router)
 
+# Exact hosts we trust: local dev plus the production Vercel deployment. A CORS
+# origin is scheme + host only -- no trailing slash -- because that is literally
+# what the browser puts in the `Origin` header, and Starlette string-compares it.
 origins = [
-    "http://localhost:3000", 
+    "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://dmv-river-intelligence-network.vercel.app",
 ]
 
+# Vercel builds every non-production branch at its own throwaway hostname
+# (dmv-river-intelligence-network-git-<branch>-<team>.vercel.app, and a
+# commit-hash variant), so no fixed list can cover them. The regex admits the
+# whole family. It is deliberately loose, and Vercel project names are not
+# reserved, so a stranger could in principle claim a matching hostname -- which
+# is exactly why allow_credentials stays False below.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],  
-    allow_headers=["*"],  
+    allow_origin_regex=r"https://dmv-river-intelligence-network-[a-z0-9-]+\.vercel\.app",
+    # Nothing here reads cookies or sessions; every endpoint is public
+    # read-only data. Keeping credentials off means a spoofed preview-lookalike
+    # origin gains nothing. Revisit if student logins ever land.
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.get("/api/data")

@@ -86,6 +86,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+def root():
+    return {"status": "DMV RIN API is running"}
+
 @app.get("/api/data")
 def read_data():
     return {"message": "Hello from FastAPI backend!"}

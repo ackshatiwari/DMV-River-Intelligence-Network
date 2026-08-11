@@ -56,24 +56,23 @@ export default function FloodRiskCard({ floodRisk, loading, error }: FloodRiskCa
                 <div className="mt-2 flex flex-col gap-2">
                     <div className="flex flex-wrap items-center gap-3">
                         <span
-                            className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold ${
-                                floodRisk.risk_level === "elevated"
+                            className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold ${floodRisk.risk_level === "elevated"
                                     ? "bg-rose-500/20 text-rose-200"
                                     : "bg-emerald-500/20 text-emerald-200"
-                            }`}
+                                }`}
                         >
-                            {floodRisk.risk_level === "elevated" ? "Elevated risk" : "Low risk"}
+                            {floodRisk.risk_level === "elevated" ? "Elevated risk" : "Low risk"} *
                         </span>
                         {floodRisk.probability !== null ? (
                             <span className="text-sm text-slate-300">
-                                {(floodRisk.probability * 100).toFixed(1)}% probability
+                               ({(floodRisk.probability * 100).toFixed(1)}% probability)
                             </span>
                         ) : null}
                     </div>
 
                     {floodRisk.gauge_reading_at ? (
                         <p className="text-xs text-slate-400">
-                            Based on gauge reading from {new Date(floodRisk.gauge_reading_at).toLocaleString()}
+                            Based on readings at {new Date(floodRisk.gauge_reading_at).toLocaleString()}
                         </p>
                     ) : null}
 
@@ -82,6 +81,10 @@ export default function FloodRiskCard({ floodRisk, loading, error }: FloodRiskCa
                             Data may be outdated -- the latest gauge reading is older than expected.
                         </div>
                     ) : null}
+
+                    <p className="text-xs text-slate-400">
+                        * This is for informational purposes only. For emergency situations, please contact local authorities. AI predictions may include mistakes.
+                    </p>
                 </div>
             ) : null}
         </section>

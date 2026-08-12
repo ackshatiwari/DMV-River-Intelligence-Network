@@ -36,7 +36,7 @@ Beyond developing technology, the nonprofit seeks to connect students, educators
 
 ### Partnerships
 
-- Official partnership with the **Interstate Commission on the Potomac River Basin (ICPRB)**.
+- Unofficial partnership with the **Interstate Commission on the Potomac River Basin (ICPRB)**.
 
 ---
 

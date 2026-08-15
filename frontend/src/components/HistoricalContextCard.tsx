@@ -38,6 +38,8 @@ type HistoricalContextCardProps = {
     error: string | null;
 };
 
+const SAMPLES_PER_YEAR = 15; // 15-day window around the date, each year
+
 // ── Percentile bands ──────────────────────────────────────────────────────────
 //
 // DIVERGING, not sequential. Percentile has two notable ends -- drought at the
@@ -245,11 +247,7 @@ export default function HistoricalContextCard({ context, loading, error }: Histo
                         {comparison?.status === "ok" && percentile !== null ? (
                             <div className="min-w-[16rem] flex-1">
                                 {/* B: the plain claim leads. A: the number backs it. */}
-                                <p className="text-lg font-medium text-slate-100">
-                                    {band?.label === "About normal"
-                                        ? `About normal for ${seasonLabel(context.generated_at)}`
-                                        : `${band?.label.replace(" than usual", "")} than usual for ${seasonLabel(context.generated_at)}`}
-                                </p>
+                                
                                 <p className="mt-1 text-sm text-slate-400">
                                     {Math.round(100 - percentile)}% of past {seasonPlural(context.generated_at)} had higher flow
                                 </p>
@@ -259,13 +257,10 @@ export default function HistoricalContextCard({ context, loading, error }: Histo
 
                     {comparison?.status === "ok" ? (
                         <p className="mt-3 text-sm text-slate-400">
-                            {vsTypical !== null ? (
-                                <span className="text-slate-300">
-                                    {Math.abs(Math.round(vsTypical))}% {vsTypical < 0 ? "below" : "above"} typical
-                                </span>
-                            ) : null}
-                            {vsTypical !== null ? " · " : null}
-                            {comparison.sample_size} readings from past years
+                            Based on readings from the past 
+                           <span className="font-medium text-slate-300">
+                                {" " + Math.floor(comparison.sample_size / SAMPLES_PER_YEAR)} years
+                            </span>
                         </p>
                     ) : null}
 

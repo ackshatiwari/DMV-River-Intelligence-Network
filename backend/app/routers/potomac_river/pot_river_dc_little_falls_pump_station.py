@@ -78,7 +78,7 @@ class FloodRiskResponse(BaseModel):
     status: Literal["ok", "insufficient_data"]
     probability: Optional[float] = None
     risk_level: Optional[Literal["low", "elevated"]] = None
-    model_version: str = "xgboost-v1"
+    model_version: str = "xgboost-v2"
     generated_at: datetime
     gauge_reading_at: Optional[datetime] = None
     data_freshness: Optional[DataFreshness] = None

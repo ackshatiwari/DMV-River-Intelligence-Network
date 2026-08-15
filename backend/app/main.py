@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .routers.potomac_river import pot_river_dc_little_falls_pump_station
-from .services.potomac_river.historical_baseline_pot_river_dc_little_falls_pump_station import (
+from .services.potomac_river.pot_river_dc_little_falls_pump_station.historical_baseline_pot_river_dc_little_falls_pump_station import (
     warm_baseline_cache,
 )
 

@@ -1,3 +1,7 @@
+"""This file serves the Little Falls Pump Station API endpoints, which are a subset of the
+ Potomac River API. The endpoints here are mounted at /potomac/little_falls_pump_station.
+ """
+
 from datetime import datetime, timezone
 from typing import Dict, Literal, Optional, Union
 
@@ -5,16 +9,16 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 # import the service module for the Little Falls Pump Station
-from ...services.potomac_river.flood_prediction_pot_river_dc_little_falls_pump_station import (
+from ...services.potomac_river.pot_river_dc_little_falls_pump_station.flood_prediction_pot_river_dc_little_falls_pump_station import (
     get_current_conditions as fetch_current_conditions,
 )
 
-from ...services.potomac_river.flood_features_pot_river_dc_little_falls_pump_station import (
+from ...services.potomac_river.pot_river_dc_little_falls_pump_station.flood_features_pot_river_dc_little_falls_pump_station import (
     InsufficientDataError,
     build_feature_row,
 )
 
-from ...services.potomac_river.historical_baseline_pot_river_dc_little_falls_pump_station import (
+from ...services.potomac_river.pot_river_dc_little_falls_pump_station.historical_baseline_pot_river_dc_little_falls_pump_station import (
     BaselineUnavailableError,
     get_historical_context,
 )

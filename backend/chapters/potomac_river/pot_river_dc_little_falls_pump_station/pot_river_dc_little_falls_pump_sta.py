@@ -131,20 +131,12 @@ def _pivot(df, param_map):
 
 def _add_precip_windows(weather_df):
     """
-    Trailing precipitation totals over 3h / 24h / 72h.
+    Trailing precipitation totals over 3h / 24h / 72h, on the hourly frame.
 
-    Computed on the HOURLY weather frame at its native resolution, which is the
-    only place these can be computed correctly -- see the note in
-    fill_csv_dataset() for what went wrong when they were computed after the merge.
+    Time-based windows, not row counts -- the merged index has no fixed spacing.
 
-    The windows are TIME-based ("3h") rather than row-count-based (36). That
-    distinction is the whole fix: a row count only means a fixed duration if the
-    index has a fixed spacing, and this project's merged index does not.
-
-    min_periods is pinned to the exact number of hourly readings each window
-    needs, so a window that isn't fully covered comes back as NaN instead of a
-    quietly-too-small partial sum. That mirrors the live inference path, which
-    raises InsufficientDataError rather than emitting a partial window.
+    min_periods pins each window to its full hour count, so a partly covered
+    window returns NaN rather than a quietly-too-small sum.
     """
     if weather_df.empty or "precipitation" not in weather_df.columns:
         return weather_df
@@ -167,28 +159,8 @@ def fill_csv_dataset(hydraulic_df, water_quality_df, weather_df):
     """
     Merge the three datasets into a single DataFrame and save to CSV.
     """
-    # CHANGED: the precip_3hr / precip_24hr / precip_72hr columns are now built
-    # HERE, on the hourly weather frame, BEFORE the merge below. They used to be
-    # built after the merge, on the concatenated + forward-filled frame, which was
-    # wrong in two compounding ways:
-    #
-    #   1. Row counts, not durations. The old code used .rolling(36) / (288) /
-    #      (864) and a comment claiming those meant 3h / 24h / 72h. They only mean
-    #      that at 5-minute spacing. The merged index below is mostly 15-minute
-    #      (and this site's archive actually mixes 5-minute and 15-minute eras), so
-    #      a fixed row count spanned a different amount of time in different parts
-    #      of the same dataset. There is no row count that is correct here.
-    #
-    #   2. Forward-filled rain was summed repeatedly. `precipitation` is hourly and
-    #      is ffill'd onto the finer hydraulic grid below, so each hourly reading
-    #      appears ~4x in a row. Summing over those rows counted the same rain
-    #      several times over.
-    #
-    # Net effect: the trained columns ran ~7-12x larger than the identically-named
-    # values that flood_features_pot_river_dc_little_falls_pump_station.py computes
-    # at prediction time, so the model was served rain totals far outside the range
-    # it learned on. Computing them here, on the hourly data, makes the two paths
-    # agree by construction.
+    # Rain totals are built before the merge, while the frame is still hourly.
+    # Afterwards each reading is forward-filled and would be summed several times.
     weather_df = _add_precip_windows(weather_df)
 
     df = pd.concat([hydraulic_df, water_quality_df, weather_df], axis=1)
@@ -199,13 +171,7 @@ def fill_csv_dataset(hydraulic_df, water_quality_df, weather_df):
         "soil_moisture_0_to_1cm", "soil_moisture_1_to_3cm",
         "precipitation", "rain", "snowfall", "snow_depth",
         "temperature_2m", "wind_speed_10m", "vapour_pressure_deficit",
-        # CHANGED: added to this list. Now that the three precip windows arrive
-        # from the hourly weather frame, they land on only 1 in every ~4 rows of
-        # the merged index and are NaN elsewhere. Forward-filling them here keeps
-        # every row usable -- without this, the training notebook's
-        # dropna(subset=feature_columns) would discard ~75% of the dataset.
-        # This is the same treatment the other hourly weather columns above
-        # already get, so it introduces no new assumption.
+        # Hourly-derived, so present on ~1 row in 4 -- fill like the rest.
         "precip_3hr", "precip_24hr", "precip_72hr",
     ]
     df[sparse_cols] = df[sparse_cols].ffill()

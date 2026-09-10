@@ -38,8 +38,6 @@ type HistoricalContextCardProps = {
     error: string | null;
 };
 
-const SAMPLES_PER_YEAR = 15; // 15-day window around the date, each year
-
 // ── Percentile bands ──────────────────────────────────────────────────────────
 //
 // DIVERGING, not sequential. Percentile has two notable ends -- drought at the
@@ -115,38 +113,41 @@ function PerYearStrip({ perYear, currentYear }: PerYearStripProps) {
     const years = Object.keys(perYear).sort();
     if (years.length === 0) return null;
 
-    const maxMean = Math.max(...years.map((year) => perYear[year].mean));
+    // SQUARE-ROOT scale, not linear. Across 15 years the strip is dominated by
+    // flood years -- one 15,000 cfs September pins a linear scale and flattens
+    // every other year onto the 2% floor, so the bars stop encoding anything.
+    // Sqrt compresses that range and keeps the ordering intact. Bar length is
+    // therefore NOT proportional to flow, which is why the exact value is
+    // labelled beside every bar and the scale is named beneath the strip.
+    const maxRoot = Math.sqrt(Math.max(...years.map((year) => perYear[year].mean), 0));
 
     return (
         <div className="mt-5 flex flex-1 flex-col">
             <p className="text-xs text-slate-400">15-day window around this date, each year</p>
 
             {/* HORIZONTAL rows -- year label, bar, value -- so the strip fills a
-                tall narrow column and every year label reads left-to-right
-                without rotation.
+                tall narrow column and every year label reads left-to-right.
 
-                ONE series (discharge by year), so one hue: colouring each bar by
-                its own band would imply the years are separate categories and put
-                five hues on screen at once. The current year is distinguished by
-                weight and opacity, not by a different colour.
+                ONE series (discharge by year), so one hue. The current year is
+                distinguished by weight and opacity, not by a different colour.
 
                 Each bar sits in its own TRACK with an explicit width. Without the
                 track the bar is a flex item competing with the labels for space,
-                and flex-shrink squashes the long ones -- the bars come out nearly
-                equal regardless of their values and the encoding silently stops
-                encoding anything. That was a real bug in the vertical version. */}
-            {/* justify-between + flex-1: the rows spread to fill the tall right
-                column instead of bunching at the top with dead space beneath. */}
-            <div className="mt-3 flex flex-1 flex-col justify-between gap-3">
+                and flex-shrink squashes the long ones until every bar is nearly
+                equal regardless of its value. */}
+            <div className="mt-3 flex flex-1 flex-col justify-between gap-2">
                 {years.map((year) => {
                     const stat = perYear[year];
                     const isCurrent = year === currentYear;
                     // Floor the width so a very dry year is still a visible mark
                     // rather than an invisible sliver.
-                    const widthPercent = maxMean > 0 ? Math.max((stat.mean / maxMean) * 100, 2) : 2;
+                    const widthPercent =
+                        maxRoot > 0
+                            ? Math.max((Math.sqrt(Math.max(stat.mean, 0)) / maxRoot) * 100, 2)
+                            : 2;
 
                     return (
-                        <div key={year} className="flex items-center gap-3">
+                        <div key={year} className="flex items-center gap-2">
                             <span
                                 className={`w-9 shrink-0 text-[11px] tabular-nums ${
                                     isCurrent ? "font-semibold text-slate-100" : "text-slate-400"
@@ -156,7 +157,7 @@ function PerYearStrip({ perYear, currentYear }: PerYearStripProps) {
                             </span>
 
                             <div
-                                className="h-3 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-800/70"
+                                className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-800/70"
                                 title={`${year}: ${formatFlow(stat.mean)} cfs mean, ${stat.n} daily readings`}
                             >
                                 <div
@@ -180,6 +181,8 @@ function PerYearStrip({ perYear, currentYear }: PerYearStripProps) {
                     );
                 })}
             </div>
+
+            
         </div>
     );
 }
@@ -199,6 +202,16 @@ export default function HistoricalContextCard({ context, loading, error }: Histo
     const median = comparison?.baseline_median ?? null;
     const vsTypical =
         context && median !== null && median !== 0 ? ((context.current - median) / median) * 100 : null;
+
+    const currentYear = context ? String(new Date(context.generated_at).getFullYear()) : null;
+
+    // Counted from per_year rather than derived from sample_size: USGS records have
+    // gaps, so sample_size / 15 rounds a full 15-year baseline down to 14. per_year
+    // carries every fetched window, and the current year is in the strip but not in
+    // the baseline -- hence the filter.
+    const baselineYears = context
+        ? Object.keys(context.per_year).filter((year) => year !== currentYear).length
+        : 0;
 
     return (
         // flex column + h-full so the card fills the grid row's height and the
@@ -257,10 +270,8 @@ export default function HistoricalContextCard({ context, loading, error }: Histo
 
                     {comparison?.status === "ok" ? (
                         <p className="mt-3 text-sm text-slate-400">
-                            Based on readings from the past 
-                           <span className="font-medium text-slate-300">
-                                {" " + Math.floor(comparison.sample_size / SAMPLES_PER_YEAR)} years
-                            </span>
+                            Based on readings from the past{" "}
+                            <span className="font-medium text-slate-300">{baselineYears} years</span>
                         </p>
                     ) : null}
 
@@ -273,17 +284,13 @@ export default function HistoricalContextCard({ context, loading, error }: Histo
 
                     {comparison?.status === "undefined" ? (
                         <p className="mt-3 text-sm text-slate-300">
-                            No meaningful comparison available -- typical flow for {seasonLabel(context.generated_at)} is
-                            effectively zero, so a percentage against it would be misleading.
+                            No meaningful comparison available
                         </p>
                     ) : null}
 
                     {/* Renders in every status, including the two above: the year-to-year
                         spread is useful even when the headline comparison isn't available. */}
-                    <PerYearStrip
-                        perYear={context.per_year}
-                        currentYear={String(new Date(context.generated_at).getFullYear())}
-                    />
+                    <PerYearStrip perYear={context.per_year} currentYear={currentYear ?? ""} />
                 </>
             ) : null}
         </section>

@@ -3,9 +3,32 @@ import Link from "next/link";
 import Logo from "@/src/components/logo/logo";
 import Footer from "../footer/footer";
 
-const impactMetrics = [
-    { value: "1", label: "Active Dashboard" },
-    { value: "10+", label: "Users" }
+
+
+// Dashboard cards shown directly below the hero -- add a new entry here for each new dashboard
+const dashboards = [
+    {
+        name: "Potomac River",
+        qualifier: "(near Little Falls)",
+        image: "/pot_river_near_little_falls.png",
+        coordinates: "38.9497° N, -77.1278° W",
+        href: "/chapters/pot_river_dc_little_falls_pump_station",
+    },
+];
+
+// Steps shown in the "How it works" section, left to right
+const steps = [
+    { title: "Collect", description: "Retrieve observations from public data sources." },
+    { title: "Process", description: "Clean and organize the data for analysis." },
+    { title: "Analyze", description: "Apply models to identify trends and potential risks." },
+    { title: "Visualize", description: "Explore the results in interactive dashboards." },
+];
+
+// Figures shown in the "Our impact in numbers" section
+const impactStats = [
+    { value: "1+", label: "Dashboard" },
+    { value: "200+", label: "Followers" },
+    { value: "15+", label: "Active members" },
 ];
 
 // Frequently asked questions shown below the mission section
@@ -21,7 +44,12 @@ const faqs = [
 ];
 
 
-export default function Home() {
+type HomeProps = {
+    /** Switches the main page to the About section (owned by app/page.tsx). */
+    onAboutClick: () => void;
+};
+
+export default function Home({ onAboutClick }: HomeProps) {
     return (
         <main className="min-h-screen bg-page text-ink">
             <section className="relative overflow-hidden">
@@ -30,40 +58,17 @@ export default function Home() {
 
 
                         <h1 className="mt-8 max-w-3xl text-5xl font-black leading-[0.95] tracking-tight text-ink sm:text-6xl lg:text-7xl">
-                            DMV River Intelligence Network
-                            <span className="mt-4 block text-accent">Dashboard Platform</span>
+                            Environmental Data 
+
+                            <span className="mt-4 block text-accent">Made Easier to Understand</span>
                         </h1>
 
                         <p className="mt-6 max-w-2xl text-lg leading-8 text-ink-muted sm:text-xl">
-                            Powered by open data, we make Northern Virginia's waterways easier to explore and understand
+                            This platform, designed by the DMV River Intelligence Network, brings together historical
+                            public data, turning them into simple visualizations and powering predictive models, 
+                            allowing you to easily explore the waterways of Maryland and Virginia. 
                         </p>
 
-                        <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-                            <Link
-                                href="/chapters"
-                                className="inline-flex items-center justify-center rounded-full bg-accent px-6 py-3.5 text-sm font-semibold text-page transition hover:bg-ink"
-                            >
-                                View Dashboards
-                            </Link>
-                            <Link
-                                href="mailto:dmv.rivernetwork@gmail.com"
-                                className="inline-flex items-center justify-center rounded-full border border-line px-6 py-3.5 text-sm font-semibold text-ink transition hover:border-accent hover:bg-panel"
-                            >
-                                Contact the team
-                            </Link>
-                        </div>
-
-                        <div className="mt-12 grid gap-4 sm:grid-cols-3">
-                            {impactMetrics.map((metric) => (
-                                <div
-                                    key={metric.label}
-                                    className="rounded-3xl border border-line bg-panel p-5"
-                                >
-                                    <div className="text-4xl font-black text-ink">{metric.value}</div>
-                                    <div className="mt-2 text-sm font-medium text-ink-muted">{metric.label}</div>
-                                </div>
-                            ))}
-                        </div>
                     </div>
 
                     <div className="flex items-center justify-center lg:justify-end">
@@ -92,40 +97,99 @@ export default function Home() {
                 </div>
             </section>
 
-            
+            <section id="dashboards" className="border-t border-line bg-panel px-6 py-16 sm:px-10 lg:px-12 lg:py-20">
+                <div className="mx-auto max-w-[1600px]">
+                    <p className="text-sm font-semibold uppercase tracking-[0.28em] text-accent">
+                        Dashboards
+                    </p>
+                    <h2 className="mt-4 text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+                        Explore the dashboards
+                    </h2>
 
-            <section id="mission" className="bg-page px-6 py-20 sm:px-10 lg:px-12 lg:py-28">
-                <div className="mx-auto grid max-w-[1600px] gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
-                    <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.28em] text-accent">
-                            About the platform
-                        </p>
-                        <h2 className="mt-4 text-3xl font-bold tracking-tight text-ink sm:text-4xl">
-                            One place for every river dashboard, making river information clearer, faster, and more useful.
-                        </h2>
-                        <p className="mt-6 max-w-3xl text-lg leading-8 text-ink-muted">
-                            This platform brings publicly available environmental data together in a collection of
-                            interactive dashboards. Each dashboard tracks a local waterway, helping residents,
-                            students, and local organizations understand its current conditions and long-term health.
-                        </p>
+                    <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        {dashboards.map((dashboard) => (
+                            <Link
+                                key={dashboard.href}
+                                href={dashboard.href}
+                                className="group block overflow-hidden rounded-3xl border border-line bg-page transition hover:border-accent"
+                            >
+                                <div className="relative aspect-[5/2]">
+                                    <Image
+                                        src={dashboard.image}
+                                        alt={`${dashboard.name} ${dashboard.qualifier}`}
+                                        fill
+                                        className="object-cover"
+                                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                    />
+                                </div>
+                                <div className="p-6">
+                                    <h3 className="text-xl font-bold text-ink">
+                                        {dashboard.name} <span className="text-accent">{dashboard.qualifier}</span>
+                                    </h3>
+                                    <p className="mt-2 flex items-center text-sm text-ink-muted">
+                                        <Image src="/marker.png" alt="" width={20} height={20} className="mr-2" />
+                                        {dashboard.coordinates}
+                                    </p>
+                                    <span className="mt-5 inline-flex items-center justify-center rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-page transition group-hover:bg-ink">
+                                        View Dashboard
+                                    </span>
+                                </div>
+                            </Link>
+                        ))}
                     </div>
+                </div>
+            </section>
 
-                    <aside className="rounded-[2rem] border border-line bg-panel p-7">
-                        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-accent">
-                            What each dashboard offers
-                        </p>
-                        <ul className="mt-6 space-y-4 text-ink">
-                            <li className="rounded-2xl border border-line bg-page px-4 py-4">
-                                Live river conditions from public gauges.
+            <section id="how-it-works" className="bg-page px-6 py-20 sm:px-10 lg:px-12 lg:py-28">
+                <div className="mx-auto max-w-[1600px]">
+                    <p className="text-sm font-semibold uppercase tracking-[0.28em] text-accent">
+                        How it works
+                    </p>
+                    <h2 className="mt-4 text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+                        From monitoring stations to meaningful insights.
+                    </h2>
+
+                    {/* On wide screens: a line runs through the numbered circles (the ol's
+                        ::before), and a thin divider sits between each step's text (each
+                        li's ::before, skipped on the first). Both drop away when the steps
+                        wrap onto multiple rows. */}
+                    <ol className="relative mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-0 lg:before:absolute lg:before:left-[12.5%] lg:before:right-[12.5%] lg:before:top-4 lg:before:h-px lg:before:bg-line">
+                        {steps.map((step, index) => (
+                            <li
+                                key={step.title}
+                                className="relative flex flex-col items-center px-6 text-center lg:not-first:before:absolute lg:not-first:before:bottom-0 lg:not-first:before:left-0 lg:not-first:before:top-14 lg:not-first:before:w-px lg:not-first:before:bg-line"
+                            >
+                                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-sm font-semibold text-page">
+                                    {index + 1}
+                                </span>
+                                <h3 className="mt-5 text-lg font-semibold text-ink">{step.title}</h3>
+                                <p className="mt-2 max-w-[16rem] text-sm leading-6 text-ink-muted">{step.description}</p>
                             </li>
-                            <li className="rounded-2xl border border-line bg-page px-4 py-4">
-                                Historical context comparing today&apos;s flow with past years.
-                            </li>
-                            <li className="rounded-2xl border border-line bg-page px-4 py-4">
-                                AI-driven flood risk predictions.
-                            </li>
-                        </ul>
-                    </aside>
+                        ))}
+                    </ol>
+                </div>
+            </section>
+
+            <section id="impact" className="border-t border-line bg-panel px-6 py-20 sm:px-10 lg:px-12 lg:py-24">
+                <div className="mx-auto max-w-[1600px]">
+                    <p className="text-sm font-semibold uppercase tracking-[0.28em] text-accent">
+                        Impact
+                    </p>
+                    <h2 className="mt-4 text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+                        Our impact in numbers
+                    </h2>
+
+                    <div className="mt-10 grid gap-4 sm:grid-cols-3">
+                        {impactStats.map((stat) => (
+                            <div
+                                key={stat.label}
+                                className="rounded-3xl border border-line bg-page p-6"
+                            >
+                                <div className="text-5xl font-black text-ink">{stat.value}</div>
+                                <div className="mt-2 text-sm font-medium text-ink-muted">{stat.label}</div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </section>
 

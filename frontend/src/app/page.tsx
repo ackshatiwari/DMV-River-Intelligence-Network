@@ -18,8 +18,8 @@ export default function Page() {
   const [contactPageActive, setContactPageActive] = useState(false);
   const [getInvolvedPageActive, setGetInvolvedPageActive] = useState(false);
 
-  const unselectedClassPages = "text-xl font-bold text-gray-500 hover:text-gray-700 cursor-pointer";
-  const selectedClassPages = "text-xl font-bold text-blue-500 cursor-pointer";
+  const unselectedClassPages = "text-xl font-bold text-ink-muted hover:text-ink cursor-pointer";
+  const selectedClassPages = "text-xl font-bold text-accent cursor-pointer";
 
   const [message, setMessage] = useState("");
   

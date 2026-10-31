@@ -45,8 +45,8 @@ type HistoricalContextCardProps = {
 // one of them "good", and on a flood-monitoring page neither is. Warm = dry,
 // cool = wet, neutral gray in the middle so "normal" doesn't draw the eye.
 //
-// Every hex clears 3:1 against the card surface (#0f172a); verified with the
-// dataviz palette validator rather than by eye. Only ONE band renders at a time,
+// Every hex is dark enough to clear 4.5:1 against the light card surface
+// (#EAEDE8), since the label is drawn in it. Only ONE band renders at a time,
 // so these never need to be mutually distinguishable -- and the color never
 // carries the meaning alone, the label beside it always does.
 
@@ -58,11 +58,11 @@ type Band = {
 };
 
 function bandFor(percentile: number): Band {
-    if (percentile >= 90) return { label: "Much wetter than usual", color: "#3987e5", tint: "rgba(57,135,229,0.16)" };
-    if (percentile >= 75) return { label: "Wetter than usual", color: "#7aa5d8", tint: "rgba(122,165,216,0.16)" };
-    if (percentile >= 25) return { label: "About normal", color: "#98978f", tint: "rgba(152,151,143,0.16)" };
-    if (percentile >= 10) return { label: "Drier than usual", color: "#c9736f", tint: "rgba(201,115,111,0.16)" };
-    return { label: "Much drier than usual", color: "#e34948", tint: "rgba(227,73,72,0.16)" };
+    if (percentile >= 90) return { label: "Much wetter than usual", color: "#2A5680", tint: "rgba(42,86,128,0.12)" };
+    if (percentile >= 75) return { label: "Wetter than usual", color: "#426F96", tint: "rgba(66,111,150,0.12)" };
+    if (percentile >= 25) return { label: "About normal", color: "#636965", tint: "rgba(99,105,101,0.12)" };
+    if (percentile >= 10) return { label: "Drier than usual", color: "#A0524B", tint: "rgba(160,82,75,0.12)" };
+    return { label: "Much drier than usual", color: "#8E322C", tint: "rgba(142,50,44,0.12)" };
 }
 
 /**
@@ -123,7 +123,7 @@ function PerYearStrip({ perYear, currentYear }: PerYearStripProps) {
 
     return (
         <div className="mt-5 flex flex-1 flex-col">
-            <p className="text-xs text-slate-400">15-day window around this date, each year</p>
+            <p className="text-xs text-ink-muted">15-day window around this date, each year</p>
 
             {/* HORIZONTAL rows -- year label, bar, value -- so the strip fills a
                 tall narrow column and every year label reads left-to-right.
@@ -150,21 +150,21 @@ function PerYearStrip({ perYear, currentYear }: PerYearStripProps) {
                         <div key={year} className="flex items-center gap-2">
                             <span
                                 className={`w-9 shrink-0 text-[11px] tabular-nums ${
-                                    isCurrent ? "font-semibold text-slate-100" : "text-slate-400"
+                                    isCurrent ? "font-semibold text-ink" : "text-ink-muted"
                                 }`}
                             >
                                 {year}
                             </span>
 
                             <div
-                                className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-800/70"
+                                className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-line"
                                 title={`${year}: ${formatFlow(stat.mean)} cfs mean, ${stat.n} daily readings`}
                             >
                                 <div
                                     className="h-full rounded-full"
                                     style={{
                                         width: `${widthPercent}%`,
-                                        backgroundColor: "#3987e5",
+                                        backgroundColor: "var(--color-accent)",
                                         opacity: isCurrent ? 1 : 0.45,
                                     }}
                                 />
@@ -172,7 +172,7 @@ function PerYearStrip({ perYear, currentYear }: PerYearStripProps) {
 
                             <span
                                 className={`w-12 shrink-0 text-right text-[11px] tabular-nums ${
-                                    isCurrent ? "text-slate-200" : "text-slate-400"
+                                    isCurrent ? "text-ink" : "text-ink-muted"
                                 }`}
                             >
                                 {formatFlow(stat.mean)}
@@ -216,9 +216,9 @@ export default function HistoricalContextCard({ context, loading, error }: Histo
     return (
         // flex column + h-full so the card fills the grid row's height and the
         // per-year strip below can spread into it.
-        <section className="flex h-full flex-col rounded-2xl border border-slate-700/70 bg-slate-950/70 p-4 shadow-2xl shadow-slate-950/40 backdrop-blur md:p-6">
+        <section className="flex h-full flex-col rounded-2xl border border-line bg-panel p-4 md:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
-                <h2 className="text-xl font-semibold text-slate-50 md:text-2xl">Compared to this time of year</h2>
+                <h2 className="text-xl font-semibold text-ink md:text-2xl">Compared to this time of year</h2>
 
                 {band ? (
                     <span
@@ -232,11 +232,11 @@ export default function HistoricalContextCard({ context, loading, error }: Histo
             </div>
 
             {loading && !context ? (
-                <p className="mt-2 text-sm text-slate-300">Loading historical context...</p>
+                <p className="mt-2 text-sm text-ink-muted">Loading historical context...</p>
             ) : null}
 
             {error ? (
-                <div className="mt-2 rounded-2xl border border-rose-500/30 bg-rose-950/60 px-4 py-3 text-sm text-rose-100">
+                <div className="mt-2 rounded-2xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
                     {error}
                 </div>
             ) : null}
@@ -246,12 +246,12 @@ export default function HistoricalContextCard({ context, loading, error }: Histo
                     <div className="mt-4 flex flex-wrap items-end gap-x-8 gap-y-4">
                         <div>
                             <div className="flex items-baseline gap-1.5">
-                                <span className="text-3xl font-semibold tabular-nums text-slate-50">
+                                <span className="text-3xl font-semibold tabular-nums text-ink">
                                     {formatFlow(context.current)}
                                 </span>
-                                <span className="text-sm text-slate-400">cfs</span>
+                                <span className="text-sm text-ink-muted">cfs</span>
                             </div>
-                            <p className="mt-0.5 text-xs text-slate-500">
+                            <p className="mt-0.5 text-xs text-ink-muted">
                                 {context.current_window} average
                                 {formatAge(context.observed_at) ? ` · ${formatAge(context.observed_at)}` : null}
                             </p>
@@ -261,7 +261,7 @@ export default function HistoricalContextCard({ context, loading, error }: Histo
                             <div className="min-w-[16rem] flex-1">
                                 {/* B: the plain claim leads. A: the number backs it. */}
                                 
-                                <p className="mt-1 text-sm text-slate-400">
+                                <p className="mt-1 text-sm text-ink-muted">
                                     {Math.round(100 - percentile)}% of past {seasonPlural(context.generated_at)} had higher flow
                                 </p>
                             </div>
@@ -269,21 +269,21 @@ export default function HistoricalContextCard({ context, loading, error }: Histo
                     </div>
 
                     {comparison?.status === "ok" ? (
-                        <p className="mt-3 text-sm text-slate-400">
+                        <p className="mt-3 text-sm text-ink-muted">
                             Based on readings from the past{" "}
-                            <span className="font-medium text-slate-300">{baselineYears} years</span>
+                            <span className="font-medium text-ink">{baselineYears} years</span>
                         </p>
                     ) : null}
 
                     {comparison?.status === "insufficient_data" ? (
-                        <p className="mt-3 text-sm text-slate-300">
+                        <p className="mt-3 text-sm text-ink-muted">
                             Not enough history for a comparison yet -- only {comparison.sample_size} past readings
                             available for {seasonLabel(context.generated_at)}.
                         </p>
                     ) : null}
 
                     {comparison?.status === "undefined" ? (
-                        <p className="mt-3 text-sm text-slate-300">
+                        <p className="mt-3 text-sm text-ink-muted">
                             No meaningful comparison available
                         </p>
                     ) : null}

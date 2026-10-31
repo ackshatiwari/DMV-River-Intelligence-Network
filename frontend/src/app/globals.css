@@ -1,1 +1,21 @@
 @import 'tailwindcss';
+
+@theme {
+  /* Site palette */
+  --color-page: #F5F4EF;        /* main background */
+  --color-panel: #EAEDE8;       /* secondary background, cards */
+  --color-accent: #477C79;      /* primary accent */
+  --color-accent-soft: #A7C7D5; /* secondary accent -- fills only, too faint for text */
+  --color-ink: #142B3B;         /* primary text */
+  --color-ink-muted: #59666C;   /* secondary text */
+  --color-line: #D9DED8;        /* borders */
+
+  /* Status colours sit outside the palette; muted so they read on the light
+     background without shouting over it. */
+  --color-danger: #9B3B32;
+  --color-danger-soft: #F4E4E0;
+  --color-warning: #8A5A14;
+  --color-warning-soft: #F5EBD8;
+  --color-success: #2F6B47;
+  --color-success-soft: #E1ECE3;
+}

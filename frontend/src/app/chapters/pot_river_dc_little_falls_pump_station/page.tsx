@@ -11,7 +11,7 @@ const FLOOD_RISK_POLL_INTERVAL_MS = 10 * 60 * 1000; // 10 min, matched to the ga
 
 // Muted grey stroke demotes the two secondary metrics against the coloured
 // primaries. Data logic is untouched -- this is the stroke colour only.
-const SECONDARY_STROKE = "#94a3b8";
+const SECONDARY_STROKE = "#59666C";
 
 const PRIMARY_CHART_HEIGHT = 190;
 const SECONDARY_CHART_HEIGHT = 95;
@@ -21,8 +21,8 @@ const SECONDARY_CHART_HEIGHT = 95;
 // in a shorter row beneath. Colours are explicit rather than positional so they
 // can't drift if this array is ever reordered.
 const riverMetrics: RiverMetric[] = [
-    { key: "discharge_cfs", label: "Discharge", description: "Volume of water flowing past this point", unit: "cfs", color: "#0ea5e9", chartHeight: PRIMARY_CHART_HEIGHT },
-    { key: "gage_height_ft", label: "Gage Height", description: "Water surface elevation above the gage datum", unit: "ft", color: "#10b981", chartHeight: PRIMARY_CHART_HEIGHT },
+    { key: "discharge_cfs", label: "Discharge", description: "Volume of water flowing past this point", unit: "cfs", color: "#477C79", chartHeight: PRIMARY_CHART_HEIGHT },
+    { key: "gage_height_ft", label: "Gage Height", description: "Water surface elevation above the gage datum", unit: "ft", color: "#142B3B", chartHeight: PRIMARY_CHART_HEIGHT },
     { key: "specific_conductance_us_cm", label: "Conductivity", description: "Dissolved ion concentration in the water", unit: "μS/cm", color: SECONDARY_STROKE, chartHeight: SECONDARY_CHART_HEIGHT },
     { key: "water_temperature_c", label: "Temperature", description: "Temperature of the river water itself", unit: "°C", color: SECONDARY_STROKE, chartHeight: SECONDARY_CHART_HEIGHT },
 ];
@@ -143,10 +143,10 @@ export default function LittleFallsPumpStation() {
     };
  
     return (
-        <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.12),_transparent_35%),linear-gradient(180deg,_#020617_0%,_#0f172a_100%)] px-4 py-8 text-slate-50 sm:px-6 lg:px-8">
-            <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+        <main className="min-h-screen bg-page px-4 py-8 text-ink sm:px-6 lg:px-8">
+            <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-6">
                 <header className="max-w-3xl">
-                    <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">DMV River Intelligence Network - Little Falls Pump Station</h1>
+                    <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">DMV River Intelligence Network - Little Falls Pump Station</h1>
                 </header>
 
                 {/* Two columns above ~900px, one below. The right column is a fixed
@@ -156,13 +156,13 @@ export default function LittleFallsPumpStation() {
                 <div className="grid grid-cols-1 gap-6 min-[900px]:grid-cols-[minmax(0,1fr)_320px]">
                     <div className="flex min-w-0 flex-col gap-6">
                         {error ? (
-                            <div className="rounded-2xl border border-rose-500/30 bg-rose-950/60 px-4 py-3 text-sm text-rose-100">
+                            <div className="rounded-2xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
                                 {error}
                             </div>
                         ) : null}
 
                         {loading ? (
-                            <div className="rounded-2xl border border-slate-700/70 bg-slate-950/70 px-4 py-6 text-sm text-slate-300 shadow-2xl shadow-slate-950/40 backdrop-blur">
+                            <div className="rounded-2xl border border-line bg-panel px-4 py-6 text-sm text-ink-muted">
                                 Loading river data...
                             </div>
                         ) : null}

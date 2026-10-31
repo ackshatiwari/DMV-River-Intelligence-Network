@@ -59,32 +59,32 @@ export default function Contact() {
     }
 
     return (
-        <main className="min-h-screen bg-slate-950 text-slate-100">
+        <main className="min-h-screen bg-page text-ink">
             <section className="mx-auto max-w-3xl px-6 py-12">
-                <div className="rounded-3xl bg-white/90 p-8 shadow-lg ring-1 ring-black/5">
+                <div className="rounded-3xl border border-line bg-panel p-8">
                     <div className="mb-8 space-y-3">
-                        <h1 className="text-3xl font-bold text-slate-900">Contact Us</h1>
-                        <p className="text-base text-slate-600">
+                        <h1 className="text-3xl font-bold text-ink">Contact Us</h1>
+                        <p className="text-base text-ink-muted">
                             Use the form below to send us a message. We will try to respond to your query within <span className="font-medium">3 business days</span>.
                         </p>
                     </div>
 
                     <form className="grid gap-4" onSubmit={handleSubmit}>
                         <div className="grid gap-4 md:grid-cols-2">
-                            <label className="grid gap-2 text-sm font-medium text-slate-700">
+                            <label className="grid gap-2 text-sm font-medium text-ink">
                                 First name
                                 <input
-                                    className="rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
+                                    className="rounded-2xl border border-line bg-page px-4 py-3 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-soft"
                                     value={form.firstName}
                                     onChange={(event: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, firstName: event.target.value })}
                                     required
                                 />
                             </label>
 
-                            <label className="grid gap-2 text-sm font-medium text-slate-700">
+                            <label className="grid gap-2 text-sm font-medium text-ink">
                                 Last name
                                 <input
-                                    className="rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
+                                    className="rounded-2xl border border-line bg-page px-4 py-3 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-soft"
                                     value={form.lastName}
                                     onChange={(event: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, lastName: event.target.value })}
                                     required
@@ -92,21 +92,21 @@ export default function Contact() {
                             </label>
                         </div>  
 
-                        <label className="grid gap-2 text-sm font-medium text-slate-700">
+                        <label className="grid gap-2 text-sm font-medium text-ink">
                             Email Address
                             <input
                                 type="email"
-                                className="rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
+                                className="rounded-2xl border border-line bg-page px-4 py-3 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-soft"
                                 value={form.email}
                                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, email: event.target.value })}
                                 required
                             />
                         </label>
 
-                        <label className="grid gap-2 text-sm font-medium text-slate-700">
+                        <label className="grid gap-2 text-sm font-medium text-ink">
                             Message
                             <textarea
-                                className="min-h-40 rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
+                                className="min-h-40 rounded-2xl border border-line bg-page px-4 py-3 outline-none transition focus:border-accent focus:ring-2 focus:ring-accent-soft"
                                 value={form.message}
                                 onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => setForm({ ...form, message: event.target.value })}
                                 required
@@ -116,13 +116,13 @@ export default function Contact() {
                         <button
                             type="submit"
                             disabled={status === "sending"}
-                            className="inline-flex items-center justify-center rounded-2xl bg-sky-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                            className="inline-flex items-center justify-center rounded-2xl bg-accent px-5 py-3 text-sm font-semibold text-page transition hover:bg-ink disabled:cursor-not-allowed disabled:bg-ink-muted"
                         >
                             {status === "sending" ? "Sending..." : "Send message"}
                         </button>
 
                         {feedback ? (
-                            <p className={status === "error" ? "text-sm font-medium text-rose-600" : "text-sm font-medium text-emerald-700"}>
+                            <p className={status === "error" ? "text-sm font-medium text-danger" : "text-sm font-medium text-success"}>
                                 {feedback}
                             </p>
                         ) : null}

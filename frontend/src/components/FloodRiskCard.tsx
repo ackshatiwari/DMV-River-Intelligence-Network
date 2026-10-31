@@ -32,21 +32,21 @@ type FloodRiskCardProps = {
 
 export default function FloodRiskCard({ floodRisk, loading, error }: FloodRiskCardProps) {
     return (
-        <section className="rounded-2xl border border-slate-700/70 bg-slate-950/70 p-4 shadow-2xl shadow-slate-950/40 backdrop-blur md:p-6">
-            <h2 className="text-xl font-semibold text-slate-50 md:text-2xl">Flood Risk</h2>
+        <section className="rounded-2xl border border-line bg-panel p-4 md:p-6">
+            <h2 className="text-xl font-semibold text-ink md:text-2xl">Flood Risk</h2>
 
             {loading && !floodRisk ? (
-                <p className="mt-2 text-sm text-slate-300">Loading flood risk...</p>
+                <p className="mt-2 text-sm text-ink-muted">Loading flood risk...</p>
             ) : null}
 
             {error ? (
-                <div className="mt-2 rounded-2xl border border-rose-500/30 bg-rose-950/60 px-4 py-3 text-sm text-rose-100">
+                <div className="mt-2 rounded-2xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
                     {error}
                 </div>
             ) : null}
 
             {floodRisk?.status === "insufficient_data" ? (
-                <p className="mt-2 text-sm text-slate-300">
+                <p className="mt-2 text-sm text-ink-muted">
                     Not enough data yet to predict flood risk.
                     {floodRisk.detail ? ` (${floodRisk.detail})` : null}
                 </p>
@@ -57,32 +57,32 @@ export default function FloodRiskCard({ floodRisk, loading, error }: FloodRiskCa
                     <div className="flex flex-wrap items-center gap-3">
                         <span
                             className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold ${floodRisk.risk_level === "elevated"
-                                    ? "bg-rose-500/20 text-rose-200"
-                                    : "bg-emerald-500/20 text-emerald-200"
+                                    ? "bg-danger-soft text-danger"
+                                    : "bg-success-soft text-success"
                                 }`}
                         >
                             {floodRisk.risk_level === "elevated" ? "Elevated risk" : "Low risk"} *
                         </span>
                         {floodRisk.probability !== null ? (
-                            <span className="text-sm text-slate-300">
+                            <span className="text-sm text-ink-muted">
                                ({(floodRisk.probability * 100).toFixed(1)}% probability)
                             </span>
                         ) : null}
                     </div>
 
                     {floodRisk.gauge_reading_at ? (
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-ink-muted">
                             Based on readings at {new Date(floodRisk.gauge_reading_at).toLocaleString()}
                         </p>
                     ) : null}
 
                     {floodRisk.stale ? (
-                        <div className="rounded-2xl border border-amber-500/30 bg-amber-950/40 px-4 py-2 text-sm text-amber-100">
+                        <div className="rounded-2xl border border-warning/30 bg-warning-soft px-4 py-2 text-sm text-warning">
                             Data may be outdated -- the latest gauge reading is older than expected.
                         </div>
                     ) : null}
 
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-ink-muted">
                         * This is for informational purposes only. For emergency situations, please contact local authorities. AI predictions may include mistakes.
                     </p>
                 </div>

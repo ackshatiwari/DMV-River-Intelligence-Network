@@ -35,20 +35,17 @@ export default function Locations() {
 
 
     return (
-        <main className="min-h-screen bg-slate-950 text-slate-100">
+        <main className="min-h-screen bg-page text-ink">
             <section className="relative overflow-hidden">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.18),_transparent_35%),radial-gradient(circle_at_top_right,_rgba(34,197,94,0.14),_transparent_28%),linear-gradient(180deg,_#06111f_0%,_#081726_55%,_#0b1220_100%)]" />
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/40 to-transparent" />
-
-                <div className="relative mx-auto max-w-7xl px-6 py-14 sm:px-10 lg:px-12 lg:py-20">
+                <div className="relative mx-auto max-w-[1600px] px-6 py-14 sm:px-10 lg:px-12 lg:py-20">
                     <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
-                        <p className="text-xs font-semibold uppercase tracking-[0.32em] text-cyan-200/80">
+                        <p className="text-xs font-semibold uppercase tracking-[0.32em] text-accent">
                             Dashboards
                         </p>
-                        <h1 className="mt-4 text-4xl font-black leading-[0.92] tracking-tight text-white sm:text-5xl lg:text-6xl">
+                        <h1 className="mt-4 text-4xl font-black leading-[0.92] tracking-tight text-ink sm:text-5xl lg:text-6xl">
                             Explore the Dashboards
                         </h1>
-                        <p className="mt-5 max-w-3xl text-base font-medium leading-7 text-slate-300 sm:text-lg sm:leading-8">
+                        <p className="mt-5 max-w-3xl text-base font-medium leading-7 text-ink-muted sm:text-lg sm:leading-8">
                             Each dashboard follows a single monitoring site on a local waterway, combining live
                             gauge readings, historical context, and flood risk predictions to help communities
                             understand the health of their rivers and streams.
@@ -62,20 +59,18 @@ export default function Locations() {
             </section>
 
             {/* Arranged in a card-style format, each with the image of a river, name, location, and a brief description */}
-            <section className="relative overflow-hidden">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(56,189,248,0.18),_transparent_35%),radial-gradient(circle_at_top_right,_rgba(34,197,94,0.14),_transparent_28%),linear-gradient(180deg,_#06111f_0%,_#081726_55%,_#0b1220_100%)]" />
-                <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/40 to-transparent" />
-                <div className="relative mx-auto max-w-7xl px-6 py-14 sm:px-10 lg:px-12 lg:py-20">
+            <section className="relative overflow-hidden border-t border-line bg-panel">
+                <div className="relative mx-auto max-w-[1600px] px-6 py-14 sm:px-10 lg:px-12 lg:py-20">
                     <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 sm:grid-cols-2 lg:max-w-5xl lg:grid-cols-3">
-                        <div className="rounded-lg border border-white/10 bg-slate-950/55 p-6 backdrop-blur-md">
+                        <div className="rounded-lg border border-line bg-page p-6">
                             <Image src="/pot_river_near_little_falls.png" alt="Potomac River" width={300} height={300} className="rounded-md" />
-                            <h2 className="text-xl font-bold text-white">Potomac River <span className="text-cyan-300">(near Little Falls)</span></h2>
-                            <div>
+                            <h2 className="text-xl font-bold text-ink">Potomac River <span className="text-accent">(near Little Falls)</span></h2>
+                            <div className="text-ink-muted">
                                 <Image src="/marker.png" alt="marker" width={20} height={20} className="inline-block mr-2" />
                                 38.9497° N, -77.1278° W
                             </div>
                             <div>
-                                <button id="potomac-river-near-little-falls-dashboard" className="mt-2 inline-flex items-center justify-center rounded-full bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300">
+                                <button id="potomac-river-near-little-falls-dashboard" className="mt-2 inline-flex items-center justify-center rounded-full bg-accent px-4 py-2 text-sm font-semibold text-page transition hover:bg-ink">
                                     View Dashboard
                                 </button>
                             </div>

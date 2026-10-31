@@ -65,7 +65,7 @@ app.include_router(pot_river_dc_little_falls_pump_station.router)
 origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://dmv-river-intelligence-network.vercel.app",
+    "https://dmvrin-dashboards.vercel.app",
 ]
 
 # Vercel builds every non-production branch at its own throwaway hostname
@@ -77,7 +77,7 @@ origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_origin_regex=r"https://dmv-river-intelligence-network-[a-z0-9-]+\.vercel\.app",
+    allow_origin_regex=r"https://dmvrin-dashboard-[a-z0-9-]+\.vercel\.app",
     # Nothing here reads cookies or sessions; every endpoint is public
     # read-only data. Keeping credentials off means a spoofed preview-lookalike
     # origin gains nothing. Revisit if student logins ever land.

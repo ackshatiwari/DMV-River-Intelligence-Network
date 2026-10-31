@@ -64,7 +64,7 @@ export default function Page() {
           setLocationsPageActive(true);
           setContactPageActive(false);
           setGetInvolvedPageActive(false);
-        }}>Locations</h2>
+        }}>Dashboards</h2>
         <h2 className={contactPageActive ? selectedClassPages : unselectedClassPages} id="contact" onClick={() => {
           setHomePageActive(false);
           setAboutPageActive(false);

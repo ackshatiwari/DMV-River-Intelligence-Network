@@ -43,16 +43,15 @@ export default function Locations() {
                 <div className="relative mx-auto max-w-7xl px-6 py-14 sm:px-10 lg:px-12 lg:py-20">
                     <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
                         <p className="text-xs font-semibold uppercase tracking-[0.32em] text-cyan-200/80">
-                            Chapters
+                            Dashboards
                         </p>
                         <h1 className="mt-4 text-4xl font-black leading-[0.92] tracking-tight text-white sm:text-5xl lg:text-6xl">
-                            Local Chapters, Shared Vision
+                            Explore the Dashboards
                         </h1>
                         <p className="mt-5 max-w-3xl text-base font-medium leading-7 text-slate-300 sm:text-lg sm:leading-8">
-                            Each chapter of the DMV River Intelligence Network is a student-led team that
-                            collects and analyzes environmental data from local waterways. Chapters create
-                            datasets, build dashboards, and publish reports to help communities understand the
-                            health of their rivers and streams.
+                            Each dashboard follows a single monitoring site on a local waterway, combining live
+                            gauge readings, historical context, and flood risk predictions to help communities
+                            understand the health of their rivers and streams.
                         </p>
                     </div>
 

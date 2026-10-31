@@ -23,8 +23,8 @@ export default function About() {
                             <p className="mt-2 text-center text-slate-300">
                                <strong>Founder & CEO</strong><br />
                                I am a high school sophomore in the Academies of Loudoun, and I am passionate about applying
-                               technology and ML to solve real-world problems. I handle the Network's day-to-day operations, 
-                               and am the lead ML Engineer of our first chapter, the Potomac River near Little Falls. 
+                               technology and ML to solve real-world problems. I build and maintain this platform,
+                               and am the lead ML Engineer behind the Potomac River near Little Falls dashboard.
                             </p>
                         </div>
                     </div>

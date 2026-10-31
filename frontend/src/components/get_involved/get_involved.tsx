@@ -13,12 +13,12 @@ export default function GetInvolved() {
                             Get Involved
                         </p>
                         <h1 className="mt-4 text-4xl font-black leading-[0.92] tracking-tight text-white sm:text-5xl lg:text-6xl">
-                            Built by the Community, for the Community
+                            Stay Up to Date
                         </h1>
                         <p className="mt-5 max-w-3xl text-base font-medium leading-7 text-slate-300 sm:text-lg sm:leading-8">
-                            Below are some ways you can get involved with the DMV River Intelligence Network. Whether you
-                            are a student, researcher, or just someone who cares about the health of our rivers, there is
-                            a place for you.
+                            Below are some ways to keep up with the platform as new dashboards are added. Whether you
+                            are a student, researcher, or just someone who cares about the health of our rivers, these
+                            resources are for you.
                         </p>
                     </div>
                 </div>

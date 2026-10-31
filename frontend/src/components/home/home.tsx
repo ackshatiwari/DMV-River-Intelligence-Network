@@ -4,26 +4,22 @@ import Logo from "@/src/components/logo/logo";
 import Footer from "../footer/footer";
 
 const impactMetrics = [
-    { value: "1", label: "Active Chapter" },
-    { value: "4", label: "Specialized Teams per Chapter" },
-    { value: "24/7", label: "Open access to river data" },
+    { value: "1", label: "Active Dashboard" },
+    { value: "10+", label: "Users" }
 ];
 
-// Pillars of the DMV River Intelligence Network Home Page
-const pillars = [
+// Frequently asked questions shown below the mission section
+const faqs = [
     {
-        title: "Open, Accurate Data",
-        description: "We turn online jargon into clear, AI-driven insight about local rivers and streams.",
+        question: "Where does this data come from?",
+        answer: "This data is collected from public gauges, including those operated by the USGS. In other words, none of this data is hallucinated.",
     },
     {
-        title: "Student Research",
-        description: "Each chapter team creates datasets, builds dashboards, and publishes reports",
-    },
-    {
-        title: "Community Impact",
-        description: "Dashboards and AI-driven insight help residents, students, and local organizations understand stream health and environmental conditions.",
+        question: "Should we trust the models?",
+        answer: "While the models are surprisingly accurate (for example, the flood prediction model identified 25 out of 25 flood events within 11 hours), they are for informational purposes only and should not be taken at face value. After all, the models are powered by machine learning and can make mistakes.",
     },
 ];
+
 
 export default function Home() {
     return (
@@ -37,21 +33,20 @@ export default function Home() {
 
 
                         <h1 className="mt-8 max-w-3xl text-5xl font-black leading-[0.95] tracking-tight text-white sm:text-6xl lg:text-7xl">
-                            Know your river.
-                            <span className="mt-4 block text-cyan-200">Understand the data behind it.</span>
+                            DMV River Intelligence Network
+                            <span className="mt-4 block text-cyan-200">Dashboard Platform</span>
                         </h1>
 
                         <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl">
-                            Open data, student research, and technology working together to make Northern
-                            Virginia's waterways easier to explore, explain, and protect.
+                            Powered by open data, we make Northern Virginia's waterways easier to explore and understand
                         </p>
 
                         <div className="mt-10 flex flex-col gap-4 sm:flex-row">
                             <Link
-                                href="#mission"
+                                href="/chapters"
                                 className="inline-flex items-center justify-center rounded-full bg-cyan-400 px-6 py-3.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
                             >
-                                Explore our mission
+                                View Dashboards
                             </Link>
                             <Link
                                 href="mailto:dmv.rivernetwork@gmail.com"
@@ -102,54 +97,63 @@ export default function Home() {
                 </div>
             </section>
 
-            <section className="border-t border-white/10 bg-slate-900/85">
-                <div className="mx-auto grid max-w-7xl gap-4 px-6 py-12 sm:px-10 lg:grid-cols-3 lg:px-12">
-                    {pillars.map((pillar) => (
-                        <article
-                            key={pillar.title}
-                            className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_16px_48px_rgba(2,6,23,0.2)]"
-                        >
-                            <div className="mb-4 h-1.5 w-16 rounded-full bg-cyan-300" />
-                            <h3 className="text-xl font-semibold text-white">{pillar.title}</h3>
-                            <p className="mt-3 text-sm leading-7 text-slate-300">{pillar.description}</p>
-                        </article>
-                    ))}
-                </div>
-            </section>
+            
 
             <section id="mission" className="bg-slate-950 px-6 py-20 sm:px-10 lg:px-12 lg:py-28">
                 <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
                     <div>
                         <p className="text-sm font-semibold uppercase tracking-[0.28em] text-cyan-200/80">
-                            Our mission
+                            About the platform
                         </p>
                         <h2 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                            A student-led nonprofit making river information clearer, faster, and more useful.
+                            One place for every river dashboard, making river information clearer, faster, and more useful.
                         </h2>
                         <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-300">
-                            The DMV River Intelligence Network brings publicly available environmental data into
-                            one accessible platform. We help students, communities, and local organizations
-                            understand the health of their waterways through analysis, interactive dashboards,
-                            and educational resources.
+                            This platform brings publicly available environmental data together in a collection of
+                            interactive dashboards. Each dashboard tracks a local waterway, helping residents,
+                            students, and local organizations understand its current conditions and long-term health.
                         </p>
                     </div>
 
                     <aside className="rounded-[2rem] border border-white/10 bg-gradient-to-br from-white/8 to-white/4 p-7 shadow-[0_20px_60px_rgba(2,6,23,0.35)] backdrop-blur">
                         <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-200/80">
-                            What we focus on
+                            What each dashboard offers
                         </p>
                         <ul className="mt-6 space-y-4 text-slate-200">
                             <li className="rounded-2xl border border-white/10 bg-slate-900/45 px-4 py-4">
-                                Environmental data translated into readable insight.
+                                Live river conditions from public gauges.
                             </li>
                             <li className="rounded-2xl border border-white/10 bg-slate-900/45 px-4 py-4">
-                                Research that supports local understanding and decision-making.
+                                Historical context comparing today&apos;s flow with past years.
                             </li>
                             <li className="rounded-2xl border border-white/10 bg-slate-900/45 px-4 py-4">
-                                Tools designed to help the public engage with river conditions.
+                                AI-driven flood risk predictions.
                             </li>
                         </ul>
                     </aside>
+                </div>
+            </section>
+
+            <section id="faq" className="border-t border-white/10 bg-slate-950 px-6 py-20 sm:px-10 lg:px-12 lg:py-24">
+                <div className="mx-auto max-w-7xl">
+                    <p className="text-sm font-semibold uppercase tracking-[0.28em] text-cyan-200/80">
+                        FAQ
+                    </p>
+                    <h2 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                        Frequently asked questions
+                    </h2>
+
+                    <div className="mt-10 grid gap-4 lg:grid-cols-2">
+                        {faqs.map((faq) => (
+                            <article
+                                key={faq.question}
+                                className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_16px_48px_rgba(2,6,23,0.2)]"
+                            >
+                                <h3 className="text-xl font-semibold text-white">{faq.question}</h3>
+                                <p className="mt-3 text-sm leading-7 text-slate-300">{faq.answer}</p>
+                            </article>
+                        ))}
+                    </div>
                 </div>
             </section>
 

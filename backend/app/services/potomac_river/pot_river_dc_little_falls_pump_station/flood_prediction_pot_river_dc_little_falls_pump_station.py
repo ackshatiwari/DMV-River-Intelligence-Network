@@ -31,30 +31,45 @@ PARAMETER_NAMES = {
     "00095": "specific_conductance_us_cm",
 }
 
+# The longer chart ranges cover the hydraulic pair only -- temperature and
+# conductivity stay on the 24h view.
+HYDRAULIC_PARAMETER_NAMES = {
+    "00060": "discharge_cfs",
+    "00065": "gage_height_ft",
+}
 
-def get_current_data() -> pd.DataFrame:
-    """
-    Last 24h of continuous readings, one column per parameter, oldest first.
+# range -> (USGS lookback, averaging bin). The gauge reports every 5 minutes, so
+# 30 days is ~8,600 readings per parameter; averaging into bins keeps the chart
+# to a few hundred points. Mean, not max: a bin's line can sit below a sharp
+# storm peak, which the 24h view still shows at full resolution.
+HISTORY_RANGES = {
+    "7d": ("P7D", "1h"),
+    "30d": ("P30D", "3h"),
+}
 
-    The returned frame is sparse by design (see the module docstring) -- callers
-    that intend to serialize it must go through get_current_conditions() rather
-    than encoding it directly.
-    """
+# A 30-day USGS pull takes a few seconds; without this every visitor who opens
+# the 30d view would pay for it. Per-worker, like the historical baseline cache.
+HISTORY_CACHE_SECONDS = 600
+_history_cache: dict = {}
+
+
+def _fetch_continuous(parameter_names: dict, period: str) -> pd.DataFrame:
+    """Continuous readings for `period`, one column per parameter, oldest first."""
     df_continuous, metadata = waterdata.get_continuous(
         monitoring_location_id=SITE_ID,
-        parameter_code=list(PARAMETER_NAMES.keys()),
-        time="P1D",
+        parameter_code=list(parameter_names.keys()),
+        time=period,
     )
 
     if df_continuous.empty:
         # An empty frame with the right columns keeps every downstream caller on
         # the same code path -- the snapshot just comes back all-null.
-        return pd.DataFrame(columns=["time", *PARAMETER_NAMES.values()])
+        return pd.DataFrame(columns=["time", *parameter_names.values()])
 
     df = df_continuous[["time", "parameter_code", "value"]].copy()
 
     # Rename parameter codes to readable names
-    df["parameter_code"] = df["parameter_code"].replace(PARAMETER_NAMES)
+    df["parameter_code"] = df["parameter_code"].replace(parameter_names)
 
     df["time"] = pd.to_datetime(df["time"], utc=True)
     # errors="coerce" turns any non-numeric sentinel USGS sends (e.g. "Ice") into
@@ -77,6 +92,17 @@ def get_current_data() -> pd.DataFrame:
 
     df.columns.name = None
     return df
+
+
+def get_current_data() -> pd.DataFrame:
+    """
+    Last 24h of continuous readings, one column per parameter, oldest first.
+
+    The returned frame is sparse by design (see the module docstring) -- callers
+    that intend to serialize it must go through get_current_conditions() rather
+    than encoding it directly.
+    """
+    return _fetch_continuous(PARAMETER_NAMES, "P1D")
 
 
 def _to_iso(timestamp: Any) -> Optional[str]:
@@ -156,3 +182,34 @@ def get_current_conditions() -> dict:
         "snapshot": snapshot,
         "data": _series_to_json_safe(df),
     }
+
+
+def get_hydraulic_history(range_key: str) -> dict:
+    """
+    JSON-safe payload for the /hydraulic_history endpoint: discharge and gage
+    height over `range_key` ("7d" or "30d"), averaged into that range's bins.
+
+    Bins with no readings come back as null, same as the gaps in the 24h series,
+    and `data` has the same {column: {row_index: value}} shape.
+    """
+    now = pd.Timestamp.now(tz="UTC")
+    cached = _history_cache.get(range_key)
+    if cached is not None and now - cached["retrieved_at"] < pd.Timedelta(seconds=HISTORY_CACHE_SECONDS):
+        return cached
+
+    period, interval = HISTORY_RANGES[range_key]
+    df = _fetch_continuous(HYDRAULIC_PARAMETER_NAMES, period)
+    if not df.empty:
+        df = df.set_index("time").resample(interval).mean().reset_index()
+
+    payload = {
+        "site_id": SITE_ID,
+        "range": range_key,
+        "interval": interval,
+        "retrieved_at": now,
+        "data": _series_to_json_safe(df),
+    }
+    # Don't pin an empty USGS response in the cache for ten minutes.
+    if not df.empty:
+        _history_cache[range_key] = payload
+    return payload

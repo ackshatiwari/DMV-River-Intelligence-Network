@@ -11,6 +11,7 @@ from pydantic import BaseModel
 # import the service module for the Little Falls Pump Station
 from ...services.potomac_river.pot_river_dc_little_falls_pump_station.flood_prediction_pot_river_dc_little_falls_pump_station import (
     get_current_conditions as fetch_current_conditions,
+    get_hydraulic_history,
 )
 
 from ...services.potomac_river.pot_river_dc_little_falls_pump_station.flood_features_pot_river_dc_little_falls_pump_station import (
@@ -59,6 +60,21 @@ class CurrentConditionsResponse(BaseModel):
     # "data" and the frontend is unchanged. `time` values are ISO strings, every
     # other column is float-or-null (null where that parameter didn't report at
     # that timestamp).
+    data: Dict[str, Dict[str, Optional[Union[str, float]]]]
+
+
+class HydraulicHistoryResponse(BaseModel):
+    """
+    Contract for /hydraulic_history: discharge and gage height over 7 or 30 days,
+    averaged into `interval` bins. `data` has the same shape as
+    CurrentConditionsResponse.data, so the same chart code reads both.
+    """
+    site_id: str
+    range: Literal["7d", "30d"]
+    interval: str
+    # When USGS was actually queried -- the service caches each range for ten
+    # minutes, so this can be older than the request.
+    retrieved_at: datetime
     data: Dict[str, Dict[str, Optional[Union[str, float]]]]
 
 
@@ -165,6 +181,26 @@ def get_current_conditions():
         snapshot=conditions["snapshot"],
         data=conditions["data"],
     )
+
+
+@router.get("/hydraulic_history", response_model=HydraulicHistoryResponse)
+def hydraulic_history(range: Literal["7d", "30d"]):
+    """
+    The 7- and 30-day views for the discharge and gage-height charts. The 24h
+    view is not served here -- it's the raw 5-minute series already in
+    /current_conditions. A `range` outside 7d/30d is rejected with a 422.
+    """
+    try:
+        history = get_hydraulic_history(range)
+    except Exception as exc:
+        # Same treatment as /current_conditions: USGS unreachable is a
+        # retry-able 503, not a 500.
+        raise HTTPException(
+            status_code=503,
+            detail=f"Upstream data source unavailable: {exc}",
+        )
+
+    return HydraulicHistoryResponse(**history)
 
 
 @router.get("/flood_risk", response_model=FloodRiskResponse)

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import RiverDataChart, { type RiverMetric } from "@/src/components/RiverDataChart";
+import RiverDataChart, { type RiverMetric, type UnitOption } from "@/src/components/RiverDataChart";
 import FloodRiskCard, { type FloodRiskResponse } from "@/src/components/FloodRiskCard";
 import HistoricalContextCard, { type HistoricalContextResponse } from "@/src/components/HistoricalContextCard";
 
@@ -16,6 +16,14 @@ const SECONDARY_STROKE = "#59666C";
 const PRIMARY_CHART_HEIGHT = 190;
 const SECONDARY_CHART_HEIGHT = 95;
 
+// USGS reports water temperature in °C. Converted for display only -- the API
+// and the flood model behind it stay in Celsius, since the model was trained on
+// °C. Fahrenheit first, so it is the default for a local, non-specialist audience.
+const TEMPERATURE_UNITS: UnitOption[] = [
+    { unit: "°F", convert: (celsius) => (celsius * 9) / 5 + 32 },
+    { unit: "°C", convert: (celsius) => celsius },
+];
+
 // ONE array -> one card, one toggler, one observation count. Order matters: the
 // grid is two columns, so the first two land in a tall top row and the last two
 // in a shorter row beneath. Colours are explicit rather than positional so they
@@ -24,7 +32,7 @@ const riverMetrics: RiverMetric[] = [
     { key: "discharge_cfs", label: "Discharge", description: "Volume of water flowing past this point", unit: "cfs", color: "#477C79", chartHeight: PRIMARY_CHART_HEIGHT },
     { key: "gage_height_ft", label: "Gage Height", description: "Water surface elevation above the gage datum", unit: "ft", color: "#142B3B", chartHeight: PRIMARY_CHART_HEIGHT },
     { key: "specific_conductance_us_cm", label: "Conductivity", description: "Dissolved ion concentration in the water", unit: "μS/cm", color: SECONDARY_STROKE, chartHeight: SECONDARY_CHART_HEIGHT },
-    { key: "water_temperature_c", label: "Temperature", description: "Temperature of the river water itself", unit: "°C", color: SECONDARY_STROKE, chartHeight: SECONDARY_CHART_HEIGHT },
+    { key: "water_temperature_c", label: "Temperature", description: "Temperature of the river water itself", unit: "°C", unitOptions: TEMPERATURE_UNITS, color: SECONDARY_STROKE, chartHeight: SECONDARY_CHART_HEIGHT },
 ];
 
 export default function LittleFallsPumpStation() {

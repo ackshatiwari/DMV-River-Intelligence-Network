@@ -12,6 +12,12 @@ import {
 } from "recharts";
 
 
+export type UnitOption = {
+  unit: string;
+  /** Converts a value from the API's native unit into this one. */
+  convert: (value: number) => number;
+};
+
 export type RiverMetric = {
   key: string;
   label: string;
@@ -25,6 +31,12 @@ export type RiverMetric = {
    * make that row shorter without needing a second card or a second toggler.
    */
   chartHeight?: number;
+  /**
+   * Display units the viewer can switch between; the first is the default. With
+   * two or more, the card shows a unit toggle and converts the headline, line,
+   * axis, and tooltip together. Display-only -- the API data is never changed.
+   */
+  unitOptions?: UnitOption[];
 };
 
 
@@ -101,19 +113,71 @@ function getLatestValue(rows: RiverChartRow[], key: string): number | null {
 
   return null;
 }
+
+// The viewer's unit choice is remembered per metric, per browser. Storage can
+// throw (private windows, blocked site data); a lost preference just falls back
+// to the default unit, so every failure here is swallowed.
+function unitStorageKey(metricKey: string) {
+  return `dmvrin:unit:${metricKey}`;
+}
+
+function readStoredUnit(metricKey: string): string | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  try {
+    return window.localStorage.getItem(unitStorageKey(metricKey));
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredUnit(metricKey: string, unit: string) {
+  try {
+    window.localStorage.setItem(unitStorageKey(metricKey), unit);
+  } catch {
+    // Not persisted; the toggle still works for this visit.
+  }
+}
+
 // this type defines the props for the MetricChartCard component, which displays a line chart for a specific river metric
 type MetricChartCardProps = {
   dataKey: string;
   label: string;
   description?: string;
   unit?: string;
+  unitOptions?: UnitOption[];
   color: string;
   data: RiverChartRow[];
   latestValue: number | null;
   chartHeight: number;
 };
 
-function MetricChartCard({ dataKey, label, description, unit, color, data, latestValue, chartHeight }: MetricChartCardProps) {
+function MetricChartCard({ dataKey, label, description, unit, unitOptions, color, data, latestValue, chartHeight }: MetricChartCardProps) {
+  // Read in the initializer rather than an effect: this card only mounts after the
+  // client-side fetch resolves, so it never server-renders and can't mismatch.
+  const [selectedUnit, setSelectedUnit] = useState<string | null>(() => readStoredUnit(dataKey));
+  const activeOption = unitOptions?.find((option) => option.unit === selectedUnit) ?? unitOptions?.[0];
+  const convert = activeOption?.convert;
+  const displayUnit = activeOption?.unit ?? unit;
+
+  const displayData = useMemo(
+    () =>
+      convert
+        ? data.map((row) => {
+            const value = row[dataKey];
+            return { ...row, [dataKey]: typeof value === "number" ? convert(value) : value };
+          })
+        : data,
+    [data, dataKey, convert],
+  );
+  const displayLatest = latestValue !== null && convert ? convert(latestValue) : latestValue;
+
+  const selectUnit = (nextUnit: string) => {
+    setSelectedUnit(nextUnit);
+    writeStoredUnit(dataKey, nextUnit);
+  };
+
   return (
     <div className="group rounded-2xl border border-line bg-page p-4 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-accent-soft">
       <div className="mb-3 flex items-start justify-between gap-3">
@@ -121,15 +185,38 @@ function MetricChartCard({ dataKey, label, description, unit, color, data, lates
           <h3 className="text-sm font-medium text-ink">{label}</h3>
           {description ? <p className="mt-0.5 text-xs text-ink-muted">{description}</p> : null}
         </div>
-        <div className="flex items-baseline gap-1">
-          <span className="text-2xl font-semibold tabular-nums text-ink">{formatValue(latestValue)}</span>
-          {unit ? <span className="text-sm text-ink-muted">{unit}</span> : null}
+        <div className="flex flex-col items-end gap-1.5">
+          {unitOptions && unitOptions.length > 1 ? (
+            <div role="group" aria-label={`${label} unit`} className="inline-flex rounded-full border border-line bg-panel p-0.5">
+              {unitOptions.map((option) => {
+                const active = option.unit === displayUnit;
+
+                return (
+                  <button
+                    key={option.unit}
+                    type="button"
+                    onClick={() => selectUnit(option.unit)}
+                    aria-pressed={active}
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium transition ${
+                      active ? "bg-ink text-page" : "text-ink-muted hover:text-ink"
+                    }`}
+                  >
+                    {option.unit}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+          <div className="flex items-baseline gap-1">
+            <span className="text-2xl font-semibold tabular-nums text-ink">{formatValue(displayLatest)}</span>
+            {displayUnit ? <span className="text-sm text-ink-muted">{displayUnit}</span> : null}
+          </div>
         </div>
       </div>
 
       <div className="w-full" style={{ height: chartHeight }}>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+          <LineChart data={displayData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
             <CartesianGrid stroke="#D9DED8" strokeDasharray="3 3" />
             <XAxis
               dataKey="time"
@@ -153,7 +240,7 @@ function MetricChartCard({ dataKey, label, description, unit, color, data, lates
                 color: "#142B3B",
               }}
               labelFormatter={(value) => formatTimestamp(String(value))}
-              formatter={(value) => [`${formatValue(Number(value))}${unit ? ` ${unit}` : ""}`, label]}
+              formatter={(value) => [`${formatValue(Number(value))}${displayUnit ? ` ${displayUnit}` : ""}`, label]}
             />
             <Line
               type="monotone"
@@ -239,6 +326,7 @@ export default function RiverDataChart({ data, metrics, title = "River Monitorin
               label={metric.label}
               description={metric.description}
               unit={metric.unit}
+              unitOptions={metric.unitOptions}
               color={metric.color}
               data={chartData}
               latestValue={getLatestValue(chartData, metric.key)}

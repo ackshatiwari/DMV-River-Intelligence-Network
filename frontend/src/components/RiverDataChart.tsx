@@ -47,12 +47,29 @@ type RiverChartRow = {
   [key: string]: string | number | null;
 };
 
+/**
+ * A shared time-range switch for a subset of metrics. The first option is the
+ * default view and is drawn from the chart's main `data`; the others come from
+ * `data` here, which the page fetches when one is first selected. Every metric in
+ * `metricKeys` follows the same selection, so their time axes always line up.
+ */
+export type RangeControl = {
+  options: string[];
+  selected: string;
+  onSelect: (range: string) => void;
+  metricKeys: string[];
+  /** Series for `selected` when it isn't the default; null while loading or failed. */
+  data: RiverDataRecord | null;
+  error: string | null;
+};
+
 type RiverDataChartProps = {
   data: RiverDataRecord | null | undefined;
   metrics: RiverMetric[];
   title?: string;
   /** Default plot height in px, for metrics that don't set their own. */
   chartHeight?: number;
+  rangeControl?: RangeControl;
 };
 
 const defaultPalette = ["#477C79", "#142B3B", "#59666C"];
@@ -91,6 +108,16 @@ function formatTimestamp(value: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+// Axis ticks for the multi-day ranges, where the time of day is just noise.
+function formatDate(value: string) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  return parsed.toLocaleDateString([], { month: "short", day: "numeric" });
 }
 
 // this function formats a number to two decimal places, or returns "—" if the value is null, undefined, or NaN
@@ -140,6 +167,38 @@ function writeStoredUnit(metricKey: string, unit: string) {
   }
 }
 
+type SegmentedToggleProps = {
+  ariaLabel: string;
+  options: string[];
+  selected: string | undefined;
+  onSelect: (option: string) => void;
+};
+
+// The small pill switch in a card's header, shared by the unit and range toggles.
+function SegmentedToggle({ ariaLabel, options, selected, onSelect }: SegmentedToggleProps) {
+  return (
+    <div role="group" aria-label={ariaLabel} className="inline-flex rounded-full border border-line bg-panel p-0.5">
+      {options.map((option) => {
+        const active = option === selected;
+
+        return (
+          <button
+            key={option}
+            type="button"
+            onClick={() => onSelect(option)}
+            aria-pressed={active}
+            className={`rounded-full px-2 py-0.5 text-xs font-medium transition ${
+              active ? "bg-ink text-page" : "text-ink-muted hover:text-ink"
+            }`}
+          >
+            {option}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 // this type defines the props for the MetricChartCard component, which displays a line chart for a specific river metric
 type MetricChartCardProps = {
   dataKey: string;
@@ -151,9 +210,27 @@ type MetricChartCardProps = {
   data: RiverChartRow[];
   latestValue: number | null;
   chartHeight: number;
+  range?: Pick<RangeControl, "options" | "selected" | "onSelect">;
+  /** Multi-day view: date-only axis ticks. */
+  showDates: boolean;
+  /** Shown in place of the plot while a range loads or after it fails. */
+  statusMessage: string | null;
 };
 
-function MetricChartCard({ dataKey, label, description, unit, unitOptions, color, data, latestValue, chartHeight }: MetricChartCardProps) {
+function MetricChartCard({
+  dataKey,
+  label,
+  description,
+  unit,
+  unitOptions,
+  color,
+  data,
+  latestValue,
+  chartHeight,
+  range,
+  showDates,
+  statusMessage,
+}: MetricChartCardProps) {
   // Read in the initializer rather than an effect: this card only mounts after the
   // client-side fetch resolves, so it never server-renders and can't mismatch.
   const [selectedUnit, setSelectedUnit] = useState<string | null>(() => readStoredUnit(dataKey));
@@ -186,26 +263,21 @@ function MetricChartCard({ dataKey, label, description, unit, unitOptions, color
           {description ? <p className="mt-0.5 text-xs text-ink-muted">{description}</p> : null}
         </div>
         <div className="flex flex-col items-end gap-1.5">
+          {range ? (
+            <SegmentedToggle
+              ariaLabel={`${label} time range`}
+              options={range.options}
+              selected={range.selected}
+              onSelect={range.onSelect}
+            />
+          ) : null}
           {unitOptions && unitOptions.length > 1 ? (
-            <div role="group" aria-label={`${label} unit`} className="inline-flex rounded-full border border-line bg-panel p-0.5">
-              {unitOptions.map((option) => {
-                const active = option.unit === displayUnit;
-
-                return (
-                  <button
-                    key={option.unit}
-                    type="button"
-                    onClick={() => selectUnit(option.unit)}
-                    aria-pressed={active}
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium transition ${
-                      active ? "bg-ink text-page" : "text-ink-muted hover:text-ink"
-                    }`}
-                  >
-                    {option.unit}
-                  </button>
-                );
-              })}
-            </div>
+            <SegmentedToggle
+              ariaLabel={`${label} unit`}
+              options={unitOptions.map((option) => option.unit)}
+              selected={displayUnit}
+              onSelect={selectUnit}
+            />
           ) : null}
           <div className="flex items-baseline gap-1">
             <span className="text-2xl font-semibold tabular-nums text-ink">{formatValue(displayLatest)}</span>
@@ -215,12 +287,17 @@ function MetricChartCard({ dataKey, label, description, unit, unitOptions, color
       </div>
 
       <div className="w-full" style={{ height: chartHeight }}>
+        {statusMessage ? (
+          <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-line text-sm text-ink-muted">
+            {statusMessage}
+          </div>
+        ) : (
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={displayData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
             <CartesianGrid stroke="#D9DED8" strokeDasharray="3 3" />
             <XAxis
               dataKey="time"
-              tickFormatter={formatTimestamp}
+              tickFormatter={showDates ? formatDate : formatTimestamp}
               minTickGap={40}
               tick={{ fill: "#59666C", fontSize: 11 }}
               axisLine={{ stroke: "#D9DED8" }}
@@ -255,15 +332,19 @@ function MetricChartCard({ dataKey, label, description, unit, unitOptions, color
             />
           </LineChart>
         </ResponsiveContainer>
+        )}
       </div>
     </div>
   );
 }
 
-export default function RiverDataChart({ data, metrics, title = "River Monitoring", chartHeight = 220 }: RiverDataChartProps) {
+export default function RiverDataChart({ data, metrics, title = "River Monitoring", chartHeight = 220, rangeControl }: RiverDataChartProps) {
   const [visibleMetrics, setVisibleMetrics] = useState<string[]>(() => metrics.map((metric) => metric.key));
 
   const chartData = useMemo(() => toChartRows(data, metrics), [data, metrics]);
+  const rangeData = rangeControl?.data;
+  const rangeRows = useMemo(() => toChartRows(rangeData, metrics), [rangeData, metrics]);
+  const longRangeSelected = rangeControl !== undefined && rangeControl.selected !== rangeControl.options[0];
 
   const metricStyles = useMemo(
     () =>
@@ -289,7 +370,7 @@ export default function RiverDataChart({ data, metrics, title = "River Monitorin
           <h2 className="mt-2 text-xl font-semibold text-ink md:text-2xl">{title}</h2>
           <p className="mt-1 text-sm text-ink-muted">Toggle the metrics below to compare river conditions over time.</p>
         </div>
-        <div className="text-sm text-ink-muted">{chartData.length} observations</div>
+        <div className="text-sm text-ink-muted">{chartData.length} readings in the last 24h</div>
       </div>
 
       <div className="mb-4 flex flex-wrap gap-2">
@@ -319,20 +400,35 @@ export default function RiverDataChart({ data, metrics, title = "River Monitorin
 
       {visibleMetricStyles.length > 0 ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {visibleMetricStyles.map((metric) => (
-            <MetricChartCard
-              key={metric.key}
-              dataKey={metric.key}
-              label={metric.label}
-              description={metric.description}
-              unit={metric.unit}
-              unitOptions={metric.unitOptions}
-              color={metric.color}
-              data={chartData}
-              latestValue={getLatestValue(chartData, metric.key)}
-              chartHeight={metric.chartHeight ?? chartHeight}
-            />
-          ))}
+          {visibleMetricStyles.map((metric) => {
+            const followsRange = rangeControl?.metricKeys.includes(metric.key) ?? false;
+            const usesRangeData = followsRange && longRangeSelected;
+
+            let statusMessage: string | null = null;
+            if (usesRangeData && !rangeControl?.data) {
+              statusMessage = rangeControl?.error ?? `Loading ${rangeControl?.selected} of readings...`;
+            }
+
+            return (
+              <MetricChartCard
+                key={metric.key}
+                dataKey={metric.key}
+                label={metric.label}
+                description={metric.description}
+                unit={metric.unit}
+                unitOptions={metric.unitOptions}
+                color={metric.color}
+                data={usesRangeData ? rangeRows : chartData}
+                // Always the latest raw reading, even on the averaged multi-day
+                // views -- a 3-hour mean would understate what the river is doing now.
+                latestValue={getLatestValue(chartData, metric.key)}
+                chartHeight={metric.chartHeight ?? chartHeight}
+                range={followsRange ? rangeControl : undefined}
+                showDates={usesRangeData}
+                statusMessage={statusMessage}
+              />
+            );
+          })}
         </div>
       ) : (
         <div className="rounded-2xl border border-dashed border-line bg-page p-8 text-center text-sm text-ink-muted">

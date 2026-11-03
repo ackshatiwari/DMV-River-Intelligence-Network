@@ -24,6 +24,14 @@ const TEMPERATURE_UNITS: UnitOption[] = [
     { unit: "°C", convert: (celsius) => celsius },
 ];
 
+// Time ranges for the discharge and gage-height charts. 24h is the raw 5-minute
+// series already in /current_conditions; 7d and 30d come averaged (1h / 3h bins)
+// from /hydraulic_history, fetched the first time each one is picked.
+type HydraulicRange = "24h" | "7d" | "30d";
+type LongHydraulicRange = Exclude<HydraulicRange, "24h">;
+const HYDRAULIC_RANGES: HydraulicRange[] = ["24h", "7d", "30d"];
+const HYDRAULIC_METRIC_KEYS = ["discharge_cfs", "gage_height_ft"];
+
 // ONE array -> one card, one toggler, one observation count. Order matters: the
 // grid is two columns, so the first two land in a tall top row and the last two
 // in a shorter row beneath. Colours are explicit rather than positional so they
@@ -46,6 +54,13 @@ export default function LittleFallsPumpStation() {
     const [historicalContext, setHistoricalContext] = useState<HistoricalContextResponse | null>(null);
     const [historicalLoading, setHistoricalLoading] = useState(true);
     const [historicalError, setHistoricalError] = useState<string | null>(null);
+
+    // Kept per range rather than as one loading flag, so a slow 30d request can't
+    // be marked done by a faster 7d one. Loading is simply "selected, but neither
+    // data nor an error for it yet".
+    const [hydraulicRange, setHydraulicRange] = useState<HydraulicRange>("24h");
+    const [hydraulicHistory, setHydraulicHistory] = useState<Partial<Record<LongHydraulicRange, RiverApiData>>>({});
+    const [hydraulicErrors, setHydraulicErrors] = useState<Partial<Record<LongHydraulicRange, string>>>({});
 
     useEffect(() => {
         fetchContinuousData();
@@ -149,6 +164,50 @@ export default function LittleFallsPumpStation() {
             setFloodRiskLoading(false);
         }
     };
+
+    const fetchHydraulicHistory = async (range: LongHydraulicRange) => {
+        setHydraulicErrors((current) => ({ ...current, [range]: undefined }));
+
+        try {
+            const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
+
+            if (!apiBaseUrl) {
+                throw new Error("NEXT_PUBLIC_API_URL is not configured.");
+            }
+
+            const response = await fetch(`${apiBaseUrl}/potomac/little_falls_pump_station/hydraulic_history?range=${range}`);
+            if (!response.ok) {
+                throw new Error(
+                    response.status === 503
+                        ? `The ${range} history is temporarily unavailable.`
+                        : 'Network response was not ok',
+                );
+            }
+            const data = await response.json();
+            setHydraulicHistory((current) => ({ ...current, [range]: data.data }));
+        } catch (error) {
+            setHydraulicErrors((current) => ({
+                ...current,
+                [range]: error instanceof Error ? error.message : 'Error fetching river history',
+            }));
+        }
+    };
+
+    // Fetches a long range the first time it's picked, and again after a failure,
+    // so re-selecting it is also the retry. Already-loaded ranges switch instantly.
+    const selectHydraulicRange = (range: string) => {
+        const next = range as HydraulicRange;
+        if (next === hydraulicRange) {
+            return;
+        }
+
+        setHydraulicRange(next);
+        if (next !== "24h" && !hydraulicHistory[next]) {
+            fetchHydraulicHistory(next);
+        }
+    };
+
+    const longRange = hydraulicRange === "24h" ? null : hydraulicRange;
  
     return (
         <main className="min-h-screen bg-page px-4 py-8 text-ink sm:px-6 lg:px-8">
@@ -180,6 +239,14 @@ export default function LittleFallsPumpStation() {
                                 data={riverData}
                                 metrics={riverMetrics}
                                 title="Potomac River at Little Falls Pump Station"
+                                rangeControl={{
+                                    options: HYDRAULIC_RANGES,
+                                    selected: hydraulicRange,
+                                    onSelect: selectHydraulicRange,
+                                    metricKeys: HYDRAULIC_METRIC_KEYS,
+                                    data: longRange ? hydraulicHistory[longRange] ?? null : null,
+                                    error: longRange ? hydraulicErrors[longRange] ?? null : null,
+                                }}
                             />
                         ) : null}
 

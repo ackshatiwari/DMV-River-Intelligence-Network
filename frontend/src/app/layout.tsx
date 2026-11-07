@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DMV River Intelligence Network",
+  title: "DMVRIN - Dashboard Platform",
   description: "Interactive dashboards for rivers and streams across the DMV.",
 };
 

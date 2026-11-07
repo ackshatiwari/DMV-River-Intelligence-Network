@@ -48,16 +48,14 @@ type RiverChartRow = {
 };
 
 /**
- * A shared time-range switch for a subset of metrics. The first option is the
- * default view and is drawn from the chart's main `data`; the others come from
- * `data` here, which the page fetches when one is first selected. Every metric in
- * `metricKeys` follows the same selection, so their time axes always line up.
+ * A time-range switch for the primary card (see `primaryMetricKeys`). The first
+ * option is the default view and is drawn from the chart's main `data`; the
+ * others come from `data` here, which the page fetches when one is first selected.
  */
 export type RangeControl = {
   options: string[];
   selected: string;
   onSelect: (range: string) => void;
-  metricKeys: string[];
   /** Series for `selected` when it isn't the default; null while loading or failed. */
   data: RiverDataRecord | null;
   error: string | null;
@@ -69,6 +67,12 @@ type RiverDataChartProps = {
   title?: string;
   /** Default plot height in px, for metrics that don't set their own. */
   chartHeight?: number;
+  /**
+   * Metrics shown ONE AT A TIME in a single full-width card, with a switch to
+   * pick between them (first is the default). The rest render as the usual
+   * two-column grid of toggleable cards beneath it.
+   */
+  primaryMetricKeys?: string[];
   rangeControl?: RangeControl;
 };
 

@@ -193,7 +193,40 @@ export default function Home({ onAboutClick }: HomeProps) {
                 </div>
             </section>
 
-            <section id="faq" className="border-t border-line bg-page px-6 py-20 sm:px-10 lg:px-12 lg:py-24">
+            {/* Compact call-to-action strip: copy on the left, a thin divider, then
+                the form button. Stacks (and drops the divider) on narrow screens. */}
+            <section id="start-a-dashboard" className="border-t border-line bg-page px-6 py-20 sm:px-10 lg:px-12 lg:py-24">
+                <div className="mx-auto flex max-w-[1600px] flex-col gap-6 sm:flex-row sm:items-center sm:gap-0">
+                    <div className="min-w-0 flex-1 sm:pr-8">
+                        <p className="text-sm font-semibold uppercase tracking-[0.28em] text-accent">
+                            Start A Dashboard
+                        </p>
+                        <h2 className="mt-4 text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+                            Bring a dashboard to your local waterway
+                        </h2>
+                        <p className="mt-4 max-w-3xl text-sm leading-6 text-ink-muted">
+                            Recognize any problems with your local waterway that a dashboard could help address?
+                            Fill out the form and tell us about the site, and we will reach out about building it together. 
+                            You would be recognized in the credits section of the dashboard for your contributions.
+
+                        </p>
+                    </div>
+
+                    <div className="flex shrink-0 items-center sm:self-stretch sm:border-l sm:border-line sm:pl-8 lg:pl-12">
+                        <a
+                            href="https://docs.google.com/forms/d/e/1FAIpQLSdFtdKmVT25GAiPFtvf1vnVMfYiEcWQybVUBURLLkGX7DV9UA/viewform?usp=dialog"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group inline-flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-page transition hover:bg-ink"
+                        >
+                            Start a Dashboard
+                            <span aria-hidden="true" className="transition group-hover:translate-x-0.5">→</span>
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <section id="faq" className="border-t border-line bg-panel px-6 py-20 sm:px-10 lg:px-12 lg:py-24">
                 <div className="mx-auto max-w-[1600px]">
                     <p className="text-sm font-semibold uppercase tracking-[0.28em] text-accent">
                         FAQ
@@ -206,7 +239,7 @@ export default function Home({ onAboutClick }: HomeProps) {
                         {faqs.map((faq) => (
                             <article
                                 key={faq.question}
-                                className="rounded-3xl border border-line bg-panel p-6"
+                                className="rounded-3xl border border-line bg-page p-6"
                             >
                                 <h3 className="text-xl font-semibold text-ink">{faq.question}</h3>
                                 <p className="mt-3 text-sm leading-7 text-ink-muted">{faq.answer}</p>
@@ -216,13 +249,13 @@ export default function Home({ onAboutClick }: HomeProps) {
                 </div>
             </section>
 
-            <section className="border-t border-line bg-panel px-6 py-12 sm:px-10 lg:px-12">
-                <div className="mx-auto max-w-[1600px] rounded-[2rem] border border-line bg-page px-6 py-8 sm:px-8">
+            <section className="border-t border-line bg-page px-6 py-12 sm:px-10 lg:px-12">
+                <div className="mx-auto max-w-[1600px] rounded-[2rem] border border-line bg-panel px-6 py-8 sm:px-8">
                     <Logo />
                 </div>
             </section>
 
-            <Footer />
+            <Footer tone="panel" />
 
             
         </main>

@@ -56,6 +56,8 @@ export type RangeControl = {
   options: string[];
   selected: string;
   onSelect: (range: string) => void;
+  /** Metrics that follow this range switch; the rest always show the default view. */
+  metricKeys: string[];
   /** Series for `selected` when it isn't the default; null while loading or failed. */
   data: RiverDataRecord | null;
   error: string | null;

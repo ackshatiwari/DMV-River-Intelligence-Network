@@ -43,7 +43,7 @@ startup.
 
 | Service | Platform | URL | Source directory |
 | --- | --- | --- | --- |
-| Frontend | Vercel | <https://dmv-river-intelligence-network.vercel.app/> | `frontend/` |
+| Frontend | Vercel | <https://dmvrin-dashboards.vercel.app/> | `frontend/` |
 | Backend | Render | <https://dmv-river-intelligence-network.onrender.com/> | `backend/` |
 
 **There is no deployment configuration checked into this repo** — no `vercel.json`, `render.yaml`,

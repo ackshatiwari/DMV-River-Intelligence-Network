@@ -128,15 +128,15 @@ origins = [
 ]
 
 # Vercel builds every non-production branch at its own throwaway hostname
-# (dmv-river-intelligence-network-git-<branch>-<team>.vercel.app, and a
-# commit-hash variant), so no fixed list can cover them. The regex admits the
+# (<project>-git-<branch>-<team>.vercel.app, and a <project>-<hash>-<team>
+# variant), so no fixed list can cover them. The regex admits the
 # whole family. It is deliberately loose, and Vercel project names are not
 # reserved, so a stranger could in principle claim a matching hostname -- which
 # is exactly why allow_credentials stays False below.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_origin_regex=r"https://dmvrin-dashboard-[a-z0-9-]+\.vercel\.app",
+    allow_origin_regex=r"https://dmvrin-dashboards-[a-z0-9-]+\.vercel\.app",
     # Nothing here reads cookies or sessions; every endpoint is public
     # read-only data. Keeping credentials off means a spoofed preview-lookalike
     # origin gains nothing. Revisit if student logins ever land.

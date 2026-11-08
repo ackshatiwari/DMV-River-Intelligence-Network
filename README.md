@@ -55,7 +55,8 @@ service boots, the dashboard is the only place to do it.
 
 Render's free tier **spins a web service down after ~15 minutes with no inbound traffic**. Waking it
 back up is a cold start: the container restarts, Python re-imports, the ~346 KB model is
-deserialized from disk, and the historical-baseline cache re-warms with six USGS calls. A visitor
+deserialized from disk, and the historical-baseline cache re-warms with one USGS call per baseline
+year. A visitor
 who lands during that window waits many seconds for the dashboard to fill in.
 
 To avoid that, an external **cron-job.org** job pings the Render backend **every 10 minutes**, which
@@ -85,11 +86,15 @@ Names only; values live in Vercel/Render and in an untracked local `frontend/.en
 
 **Backend (`backend/`)**
 
-The backend reads **no environment variables at all** — every constant (site ID, coordinates,
-parameter codes, model path) is hardcoded in source. No secrets are needed to run
-it; USGS and Open-Meteo are both unauthenticated public APIs. The one deployment-time setting that
-matters is Render's start command, which must launch `app.main:app` with `backend/` as the working
-directory.
+| Variable | Required | Used by | Purpose |
+| --- | --- | --- | --- |
+| `API_USGS_PAT` | No | The `dataretrieval` library (not our code) | USGS personal access token. When set, `dataretrieval` sends it as an `X-Api-Key` header, which raises USGS's rate limit. Without it, requests still work at the lower unauthenticated limit. |
+
+Our own code reads no environment variables: every constant (site ID, coordinates, parameter codes,
+model path) is in source. Nothing loads `backend/.env` automatically, so set variables in your shell
+or in the Render dashboard (copy [backend/.env.example](backend/.env.example) for the name).
+Open-Meteo needs no key. The one deployment-time setting that matters is Render's start command,
+which must launch `app.main:app` with `backend/` as the working directory.
 
 ---
 
@@ -177,8 +182,8 @@ Next.js **16.2.9**, App Router, React **19.2.4**, Tailwind **v4**, Recharts **3.
 
 | Route | File | Notes |
 | --- | --- | --- |
-| `/` | [page.tsx](frontend/src/app/page.tsx) | The whole marketing site. Not real routing — five `useState` booleans swap between `<Home>`, `<About>`, `<Contact>`, and `<GetInvolved>`. "Locations" is the exception: it `router.push`es to `/chapters`. |
-| `/chapters` | [page.tsx](frontend/src/app/chapters/page.tsx) | Renders `<Locations>`, a card grid of chapters (one card today). Its "View Dashboard" button navigates to the dashboard. |
+| `/` | [page.tsx](frontend/src/app/page.tsx) | The whole marketing site. Not real routing — four `useState` booleans swap between `<Home>`, `<About>`, `<Contact>`, and `<GetInvolved>`, so those sections have no URLs of their own. The home page's dashboard cards link straight to each dashboard. |
+| `/chapters` | [page.tsx](frontend/src/app/chapters/page.tsx) | Renders `<Locations>`, a card grid of chapters (one card today). Its "View Dashboard" button navigates to the dashboard. Nothing links here yet; it's only reachable by URL. |
 | `/chapters/pot_river_dc_little_falls_pump_station` | [page.tsx](frontend/src/app/chapters/pot_river_dc_little_falls_pump_station/page.tsx) | The live dashboard. |
 | `POST /api/send` | [route.ts](frontend/src/app/api/send/route.ts) | Contact form handler. Validates all four fields, then sends via Resend with `replyTo` set to the submitter. Returns `400` on missing fields, `500` on send failure. |
 
@@ -213,11 +218,9 @@ All three are pure — the page fetches, they render whatever they're handed.
   backend's `FloodRiskResponse` / `DataFreshness`.
 - **`HistoricalContextCard.tsx`** — maps percentile onto five named bands with a **diverging** color
   scale (warm = dry, cool = wet, neutral gray = normal), because on a flood page neither end of the
-  scale is "good". The label always carries the meaning; color never carries it alone. Notably, the
-  "% above/below typical" figure is computed **against the baseline median, not the API's
-  mean-based `percent_change`** — discharge is right-skewed, so the mean-based number reads far more
-  dramatic than the percentile beside it. Both fields stay in the API; only the median-based one
-  reaches the UI.
+  scale is "good". The label always carries the meaning; color never carries it alone. The card
+  shows the percentile only. The API also returns `percent_change`, `baseline_mean`, and
+  `baseline_median`, but none of them are displayed.
 
 `frontend/components/RiverDataChart.tsx` (outside `src/`) is a two-line re-export shim, not a second
 copy.
@@ -256,8 +259,8 @@ uvicorn app.main:app --reload
 Run this **from `backend/`**, not the repo root — `app.main` must be importable.
 
 On startup you should see two lines confirming the model deserialized and the baseline cache warmed.
-The warm makes six USGS calls and takes a few seconds; if it fails you'll see a message saying it
-will lazy-load instead, and that is non-fatal.
+The warm makes one USGS call per baseline year and can take several seconds; if it fails you'll see
+a message saying it will lazy-load instead, and that is non-fatal.
 
 The API is now at `http://localhost:8000`. Verify:
 
@@ -299,7 +302,7 @@ Open <http://localhost:3000>, then the dashboard at
 
 The backend's CORS allowlist already includes `http://localhost:3000` and `http://127.0.0.1:3000`.
 If you run the frontend on a different port, add it to `origins` in
-[main.py](backend/app/main.py#L65-L69) or the browser will block every request.
+[main.py](backend/app/main.py#L124-L128) or the browser will block every request.
 
 ### 4. Optional: retraining a model
 

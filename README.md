@@ -34,11 +34,7 @@ The organization is built around **river chapters**, with each chapter focusing 
 
 Beyond developing technology, the nonprofit seeks to connect students, educators, watershed organizations, and communities through partnerships and outreach. Through classroom presentations, library workshops, and community demonstrations, the organization teaches students and residents how to interpret environmental data, understand local watershed science, and responsibly use predictive tools when making recreational or educational decisions.
 
-### Partnerships
 
-- Unofficial partnership with the **Interstate Commission on the Potomac River Basin (ICPRB)**.
-
----
 
 ## Deployment
 

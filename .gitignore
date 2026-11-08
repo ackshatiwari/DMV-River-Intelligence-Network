@@ -54,3 +54,7 @@ claude/
 *.sqlite
 *.csv
 ideas.md
+
+# cache
+__pycache__/
+*.pyc

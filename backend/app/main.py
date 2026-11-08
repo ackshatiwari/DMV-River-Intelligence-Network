@@ -1,11 +1,18 @@
+import hashlib
+import json
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 import joblib
+import sklearn
+import xgboost
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .routers.potomac_river import pot_river_dc_little_falls_pump_station
+from .services.potomac_river.pot_river_dc_little_falls_pump_station.flood_features_pot_river_dc_little_falls_pump_station import (
+    FEATURE_COLUMNS,
+)
 from .services.potomac_river.pot_river_dc_little_falls_pump_station.past_year_comparision_pot_river_dc_little_falls_pump_station import (
     warm_baseline_cache,
 )
@@ -29,6 +36,54 @@ MODEL_PATH = (
     / "pot_river_near_little_falls_flood_threshold_xgboost_model.pkl"
 )
 
+# Written next to the .pkl by the last cell of flood_threshold_xgboost.ipynb.
+# Holds the alert threshold, model_version, feature list and training metrics.
+MODEL_META_PATH = MODEL_PATH.with_suffix(".meta.json")
+
+
+def load_model_meta(model_path: Path, meta_path: Path) -> dict:
+    """
+    Read the model's metadata and check that it actually describes this model.
+
+    Fails loudly (and stops startup) rather than serving a prediction whose
+    threshold or features belong to a different model.
+    """
+    if not meta_path.exists():
+        raise RuntimeError(
+            f"Model metadata not found at {meta_path}. Re-run the last cell of "
+            "flood_threshold_xgboost.ipynb, which writes it next to the .pkl."
+        )
+
+    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+
+    actual_sha256 = hashlib.sha256(model_path.read_bytes()).hexdigest()
+    if actual_sha256 != meta["model_sha256"]:
+        raise RuntimeError(
+            f"{model_path.name} does not match {meta_path.name} (SHA-256 differs) -- the "
+            "model was re-saved without its metadata. Re-run the last cell of "
+            "flood_threshold_xgboost.ipynb so both are written together."
+        )
+
+    if meta["feature_columns"] != FEATURE_COLUMNS:
+        raise RuntimeError(
+            "The model was trained on different features than the live pipeline builds.\n"
+            f"  model:    {meta['feature_columns']}\n"
+            f"  pipeline: {FEATURE_COLUMNS}\n"
+            "Update FEATURE_COLUMNS in flood_features_pot_river_dc_little_falls_pump_station.py."
+        )
+
+    # A version mismatch doesn't stop startup -- the pickle may still load fine --
+    # but it's the first thing to suspect if predictions look off.
+    trained_with = meta.get("library_versions", {})
+    for library, running in (("scikit-learn", sklearn.__version__), ("xgboost", xgboost.__version__)):
+        if trained_with.get(library) and trained_with[library] != running:
+            print(
+                f"WARNING: model was trained with {library} {trained_with[library]}, "
+                f"server is running {running}."
+            )
+
+    return meta
+
 
 
 @asynccontextmanager
@@ -36,9 +91,13 @@ async def lifespan(app: FastAPI):
     """
     Run this block once
     """
-    
+
+    app.state.flood_model_meta = load_model_meta(MODEL_PATH, MODEL_META_PATH)
     app.state.flood_model = joblib.load(MODEL_PATH)
-    print(f"Loaded flood model from {MODEL_PATH} -> {type(app.state.flood_model)}")
+    print(
+        f"Loaded flood model {app.state.flood_model_meta['model_version']} from {MODEL_PATH} "
+        f"(alert threshold {app.state.flood_model_meta['alert_threshold']:.3f})"
+    )
 
     # Pay the six cold USGS fetches here rather than making the day's first
     # visitor wait for them.

@@ -1,0 +1,65 @@
+{
+  "model_version": "xgboost-20261108-1524",
+  "trained_at": "2026-11-08T15:24:19.582137+00:00",
+  "model_file": "pot_river_near_little_falls_flood_threshold_xgboost_model.pkl",
+  "model_sha256": "34b07ab7249560c177494692ea7aedef971dc8d3b44ee00984dd8e3d342d6d3f",
+  "feature_columns": [
+    "gage_height_ft",
+    "gage_height_roc_1h",
+    "gage_height_roc_6h",
+    "precip_3hr_log",
+    "precip_24hr_log",
+    "precip_72hr_log",
+    "temperature_2m",
+    "wind_speed_10m",
+    "vapour_pressure_deficit",
+    "rain",
+    "snowfall",
+    "snow_depth",
+    "specific_conductance_us_cm",
+    "temperature_c"
+  ],
+  "alert_threshold": 0.26162466406822205,
+  "threshold_method": "highest threshold reaching recall >= 0.9 on the held-out test set (precision-recall sweep)",
+  "label": {
+    "definition": "gage_height_ft exceeds the flood action stage within the lookahead window",
+    "flood_action_stage_ft": 5.0,
+    "lookahead_hours": 24
+  },
+  "training_data": {
+    "csv": "usgs_data_USGS-01646500.csv",
+    "train_start": "2010-07-09T04:00:00+00:00",
+    "train_end": "2022-12-14T13:15:00+00:00",
+    "test_start": "2022-12-14T13:30:00+00:00",
+    "test_end": "2026-07-05T00:00:00+00:00",
+    "train_rows": 428614,
+    "test_rows": 193327,
+    "test_positives": 13498
+  },
+  "metrics": {
+    "pr_auc": 0.9676,
+    "roc_auc": 0.9964,
+    "pr_auc_below_action_stage": 0.4997,
+    "precision_at_threshold": 0.8765,
+    "recall_at_threshold": 0.9002,
+    "f1_at_threshold": 0.8882,
+    "confusion_matrix": [
+      [
+        178117,
+        1712
+      ],
+      [
+        1347,
+        12151
+      ]
+    ]
+  },
+  "library_versions": {
+    "python": "3.13.15",
+    "scikit-learn": "1.9.0",
+    "xgboost": "3.3.0",
+    "pandas": "2.3.3",
+    "numpy": "2.2.6",
+    "joblib": "1.5.3"
+  }
+}

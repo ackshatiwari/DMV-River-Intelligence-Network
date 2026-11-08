@@ -27,7 +27,9 @@ from ...services.potomac_river.pot_river_dc_little_falls_pump_station.past_year_
 router = APIRouter(prefix="/potomac/little_falls_pump_station", tags=["little_falls_pump_station"])
 
 
-ALERT_THRESHOLD = 0.318 # see cell 10 of the xgboost nb
+# The alert threshold and model_version are NOT constants here: they're read from
+# the model's .meta.json (written by flood_threshold_xgboost.ipynb, loaded in
+# main.py's lifespan), so they always match the model actually being served.
 
 # How old a gauge reading can be before we still return a prediction but flag it
 # as stale rather than presenting it as current. Also an open question (#3) --
@@ -94,7 +96,7 @@ class FloodRiskResponse(BaseModel):
     status: Literal["ok", "insufficient_data"]
     probability: Optional[float] = None
     risk_level: Optional[Literal["low", "elevated"]] = None
-    model_version: str = "xgboost-v2"
+    model_version: str  # from the model's .meta.json, e.g. "xgboost-20261108-1530"
     generated_at: datetime
     gauge_reading_at: Optional[datetime] = None
     data_freshness: Optional[DataFreshness] = None
@@ -206,6 +208,7 @@ def hydraulic_history(range: Literal["7d", "30d"]):
 @router.get("/flood_risk", response_model=FloodRiskResponse)
 def get_flood_risk(request: Request):
     now = datetime.now(timezone.utc)
+    model_meta = request.app.state.flood_model_meta
 
     # --- Build the model's input row from live data ---
     try:
@@ -216,6 +219,7 @@ def get_flood_risk(request: Request):
         # frontend can render "not enough data yet" instead of a scary red error.
         return FloodRiskResponse(
             status="insufficient_data",
+            model_version=model_meta["model_version"],
             generated_at=now,
             detail=str(exc),
         )
@@ -231,7 +235,7 @@ def get_flood_risk(request: Request):
     # --- Run the model (loaded once at startup -- see main.py's lifespan) ---
     model = request.app.state.flood_model
     probability = float(model.predict_proba(features_df)[:, 1][0])
-    risk_level = "elevated" if probability >= ALERT_THRESHOLD else "low"
+    risk_level = "elevated" if probability >= model_meta["alert_threshold"] else "low"
 
     # --- Data freshness bookkeeping ---
     gauge_age_minutes = (now - metadata["gauge_reading_at"]).total_seconds() / 60
@@ -250,6 +254,7 @@ def get_flood_risk(request: Request):
         status="ok",
         probability=probability,
         risk_level=risk_level,
+        model_version=model_meta["model_version"],
         generated_at=now,
         gauge_reading_at=metadata["gauge_reading_at"],
         data_freshness=DataFreshness(

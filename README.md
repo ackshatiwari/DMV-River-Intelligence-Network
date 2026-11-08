@@ -216,9 +216,11 @@ This file also defines the Pydantic response models (`CurrentConditionsResponse`
 `FloodRiskResponse`, `HistoricalContextResponse`, …). Those models are the contract — the frontend's
 TypeScript types are hand-mirrored from them, so **changing one means changing the other**.
 
-Two constants live here:
-- `ALERT_THRESHOLD = 0.318` — probability at or above which `risk_level` becomes `"elevated"`.
-  Taken from cell 10 of the XGBoost notebook.
+The alert threshold (the probability at or above which `risk_level` becomes `"elevated"`) and
+`model_version` are **not** constants here. They're read from the model's `.meta.json` (see
+[The model artifact](#the-model-artifact)), so they always match the model being served.
+
+One constant lives here:
 - `STALE_AFTER_MINUTES = 120` — how old the gauge reading may be before the response sets
   `stale: true`. A placeholder, not a value derived from any requirement.
 
@@ -305,9 +307,20 @@ date rolls over. The cache is a module-level dict, therefore per-process: under
 (300 trees, `learning_rate=0.05`, `max_depth=3`, `subsample=0.8`, `colsample_bytree=0.8`,
 `random_state=42`).
 
-**How it's loaded:** once, in `main.py`'s `lifespan` hook, via `joblib.load(MODEL_PATH)`, then held
-on `app.state.flood_model`. The router reads it off `request.app.state`. It is never reloaded per
-request.
+**Metadata:** `pot_river_near_little_falls_flood_threshold_xgboost_model.meta.json`, next to the
+`.pkl`. The notebook's last cell writes both files together. The metadata holds `model_version`,
+`trained_at`, the alert threshold and how it was chosen, the feature list, training/test date
+ranges, test-set metrics, and the library versions used. It also records the `.pkl`'s SHA-256.
+
+**How it's loaded:** once, in `main.py`'s `lifespan` hook. `load_model_meta()` reads the
+`.meta.json` and **refuses to start the server** if it's missing, if its SHA-256 doesn't match the
+`.pkl`, or if its feature list differs from `FEATURE_COLUMNS`. It only warns if the
+scikit-learn/xgboost versions differ. Then `joblib.load(MODEL_PATH)` loads the model. Both are held
+on `app.state` (`flood_model`, `flood_model_meta`), and the router reads them per request. Neither
+is reloaded per request.
+
+**Retraining:** Restart → Run All in `flood_threshold_xgboost.ipynb`, then commit the `.pkl` and
+`.meta.json` together.
 
 **Input shape:** a single-row pandas DataFrame with exactly these 14 columns, in this order:
 

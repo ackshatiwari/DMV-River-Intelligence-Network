@@ -86,7 +86,7 @@ FEATURE_COLUMNS = [
 # requests_cache session, same pattern as pot_river_dc_little_falls_pump_sta.py, but a
 # much shorter expiry -- this now backs a LIVE prediction, not a one-off historical pull,
 # so a 1-hour-old cached response would silently make the model look at stale weather.
-_cache_session = requests_cache.CachedSession(".cache", expire_after=300)
+_cache_session = requests_cache.CachedSession(".cache", expire_after=1500)
 _retry_session = retry(_cache_session, retries=5, backoff_factor=0.2)
 _openmeteo = openmeteo_requests.Client(session=_retry_session)
 
@@ -272,21 +272,6 @@ def _compute_weather_features(weather_df: pd.DataFrame) -> tuple[dict, pd.Timest
     latest_row = weather_df.iloc[-1]
     weather_reading_at = weather_df.index[-1]
 
-    # ── About these 3/24/72-hour windows ──
-    # The offline training ingestion script (pot_river_dc_little_falls_pump_sta.py)
-    # computes these as `.rolling(36)`, `.rolling(288)`, `.rolling(864)` on a
-    # DataFrame built by concatenating 15-min hydraulic data with hourly weather data
-    # BY INDEX, without resampling either to a common frequency first. That means
-    # those row counts don't cleanly equal "3/24/72 hours" the way the code's own
-    # comments claim -- flagged as an open data-engineering risk in MODEL_WIRING.md.
-    #
-    # Here we compute the literal, documented intent instead: a true 3/24/72-HOUR
-    # sum, directly on Open-Meteo's native hourly series, where rolling(3) really
-    # does mean 3 hours. Before trusting this in production, diff a handful of
-    # live-computed rows against the training CSV's precip_*_log columns for
-    # matching timestamps -- if the ingestion script's misalignment shifted what the
-    # model actually learned, this implementation and the trained model will
-    # disagree on what "72h of rain" means.
     rolling_windows_hours = {
         "precip_3hr_log": 3,
         "precip_24hr_log": 24,

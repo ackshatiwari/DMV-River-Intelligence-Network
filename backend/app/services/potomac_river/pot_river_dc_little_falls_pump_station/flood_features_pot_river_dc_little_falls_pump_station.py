@@ -20,14 +20,12 @@ purpose:
     different quantity than it was trained on for BOTH of those features, not just one.
 """
 
-import math
+import json
+import urllib.request
 
 import numpy as np
-import openmeteo_requests
 import pandas as pd
-import requests_cache
 from dataretrieval import waterdata
-from retry_requests import retry
 
 # ── Site config  ────────────────────────────
 SITE_ID = "USGS-01646500" # Potomac River Near Wash, DC Little Falls Pump Sta - USGS-01646500
@@ -40,11 +38,13 @@ GAGE_HEIGHT_PARAM = "00065"             # continuous (15-min instantaneous)
 WATER_TEMPERATURE_PARAM = "00010"       # DAILY mean at training time
 SPECIFIC_CONDUCTANCE_PARAM = "00095"    # DAILY mean at training time
 
-# ── Open-Meteo config ────────────────────────────────────────────────────────────────
-# Training used the archive-api endpoint (historical only). Live inference needs
-# recent-and-current data, which is what the plain "forecast" endpoint provides via
-# its `past_days` parameter.
-OPEN_METEO_FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
+# ── Weather data config ─────────────────────────────────────────────────────────────
+# GitHub Actions refreshes this public snapshot hourly so Render does not call
+# Open-Meteo directly from a shared outbound IP.
+WEATHER_DATA_URL = (
+    "https://raw.githubusercontent.com/ackshatiwari/"
+    "DMV-River-Intelligence-Network/main/weather-data/little-falls.json"
+)
 
 # Hourly variables the model was trained on. NOTE: this is a subset of OPEN_METEO_VARS
 # in pot_river_dc_little_falls_pump_sta.py -- soil_moisture_* was fetched at training
@@ -82,14 +82,6 @@ FEATURE_COLUMNS = [
     "specific_conductance_us_cm",
     "temperature_c",
 ]
-
-# requests_cache session, same pattern as pot_river_dc_little_falls_pump_sta.py, but a
-# much shorter expiry -- this now backs a LIVE prediction, not a one-off historical pull,
-# so a 1-hour-old cached response would silently make the model look at stale weather.
-_cache_session = requests_cache.CachedSession(".cache", expire_after=1500)
-_retry_session = retry(_cache_session, retries=5, backoff_factor=0.2)
-_openmeteo = openmeteo_requests.Client(session=_retry_session)
-
 
 class InsufficientDataError(Exception):
     """
@@ -216,37 +208,16 @@ def _latest_value(df: pd.DataFrame, column: str, description: str) -> tuple[floa
 # ── Weather (Open-Meteo hourly) ─────────────────────────────────────────────────────
 
 def _fetch_weather_history() -> pd.DataFrame:
-    """Trailing hourly Open-Meteo readings, oldest first, forward-filled like training."""
-    # Open-Meteo's `past_days` is whole days, so round up and pad by one extra day --
-    # guarantees the 72-row rolling window below always has 72 full hourly rows even
-    # if "now" falls near the start of today's data.
-    past_days = math.ceil(WEATHER_LOOKBACK_HOURS / 24) + 1
+    """Trailing hourly readings from the GitHub-hosted snapshot, oldest first."""
+    with urllib.request.urlopen(WEATHER_DATA_URL, timeout=30) as response:
+        weather = json.load(response)
 
-    params = {
-        "latitude": LATITUDE,
-        "longitude": LONGITUDE,
-        "hourly": OPEN_METEO_HOURLY_VARS,
-        "past_days": past_days,
-        "forecast_days": 1,   # we only need "now", not the outlook -- keep it light
-        "timezone": "America/New_York",  # matches pot_river_dc_little_falls_pump_sta.py
+    hourly = weather["hourly"]
+    timestamps = pd.to_datetime(hourly["time"], utc=True)
+    weather_data = {
+        variable_name: hourly[variable_name]
+        for variable_name in OPEN_METEO_HOURLY_VARS
     }
-
-    responses = _openmeteo.weather_api(OPEN_METEO_FORECAST_URL, params=params)
-    response = responses[0]
-    hourly = response.Hourly()
-
-    timestamps = pd.date_range(
-        start=pd.to_datetime(hourly.Time(), unit="s", utc=True),
-        end=pd.to_datetime(hourly.TimeEnd(), unit="s", utc=True),
-        freq=pd.Timedelta(seconds=hourly.Interval()),
-        inclusive="left",
-    )
-
-    # Pull each hourly variable out of the SDK response, in the same order they were
-    # requested in `params["hourly"]` above -- Open-Meteo returns them positionally.
-    weather_data = {}
-    for index, variable_name in enumerate(OPEN_METEO_HOURLY_VARS):
-        weather_data[variable_name] = hourly.Variables(index).ValuesAsNumpy()
 
     weather_df = pd.DataFrame(weather_data, index=timestamps)
 
@@ -255,9 +226,8 @@ def _fetch_weather_history() -> pd.DataFrame:
     # single missing hour doesn't turn into a NaN rolling sum.
     weather_df = weather_df.ffill()
 
-    # `forecast_days=1` can include a few hours past "now" (Open-Meteo issues
-    # forecasts in blocks). Drop those so we never feed the model a value from the
-    # future.
+    # The snapshot includes forecast hours after the latest observed hour. Drop
+    # those so we never feed the model a value from the future.
     now = pd.Timestamp.now(tz="UTC")
     weather_df = weather_df.loc[weather_df.index <= now]
 
